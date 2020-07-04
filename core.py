@@ -1,6 +1,7 @@
 import pickle
 import os
 import pandas as pd
+from datetime import datetime, timedelta
 
 
 class FightMem:
@@ -17,3 +18,12 @@ class FightMem:
             self.db = pickle.load(open(self.db_path, 'rb'))
         else:
             self.db = []
+
+    def get_next_quiz(self):
+        """ High level API to get next knowledge """
+        pass
+
+    def set_quiz_result(self, id, result):
+        """ High level API to set quiz result """
+        pass
+
