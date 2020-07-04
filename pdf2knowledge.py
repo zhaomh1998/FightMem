@@ -13,7 +13,7 @@ def parse_row(row, verbose=False):
     if row[0] == '例例句句':  # 例句
         if verbose:
             print(f"例句{row[1]}")
-        return True, row[1]
+        return True, row[1].replace('\n', '')
     elif re.search(r'[\u4e00-\u9fa5]+', row[0]):  # 含有中文，扔掉
         return None
     elif row[0] == '' or re.search(r'^Day ', row[0]):
