@@ -19,11 +19,14 @@ class FightMem:
         else:
             self.db = []
 
+
+
     def get_next_quiz(self):
         """ High level API to get next knowledge """
-        pass
+        print("Getting next quiz item")
 
     def set_quiz_result(self, id, result):
         """ High level API to set quiz result """
-        pass
+        assert result in ['yes', 'no', 'later']
+        print(f"Setting {id} to {result}")
 

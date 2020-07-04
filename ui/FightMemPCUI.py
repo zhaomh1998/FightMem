@@ -13,7 +13,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(624, 718)
+        MainWindow.resize(664, 766)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.gridLayout = QtWidgets.QGridLayout(self.centralwidget)
@@ -76,6 +76,9 @@ class Ui_MainWindow(object):
         self.verticalLayout_2 = QtWidgets.QVBoxLayout()
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.b_show_note = QtWidgets.QCheckBox(self.centralwidget)
+        font = QtGui.QFont()
+        font.setFamily("Arial")
+        self.b_show_note.setFont(font)
         self.b_show_note.setObjectName("b_show_note")
         self.verticalLayout_2.addWidget(self.b_show_note)
         self.t_note = QtWidgets.QTextEdit(self.centralwidget)
@@ -115,6 +118,19 @@ class Ui_MainWindow(object):
         self.horizontalLayout.addWidget(self.b_no)
         spacerItem4 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem4)
+        self.b_show = QtWidgets.QPushButton(self.centralwidget)
+        font = QtGui.QFont()
+        font.setFamily("Menlo")
+        font.setPointSize(24)
+        self.b_show.setFont(font)
+        self.b_show.setStyleSheet("QPushButton\n"
+"{\n"
+"   color:#3F51B5;\n"
+"}")
+        self.b_show.setObjectName("b_show")
+        self.horizontalLayout.addWidget(self.b_show)
+        spacerItem5 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout.addItem(spacerItem5)
         self.b_later = QtWidgets.QPushButton(self.centralwidget)
         font = QtGui.QFont()
         font.setFamily("Menlo")
@@ -126,8 +142,8 @@ class Ui_MainWindow(object):
 "}")
         self.b_later.setObjectName("b_later")
         self.horizontalLayout.addWidget(self.b_later)
-        spacerItem5 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout.addItem(spacerItem5)
+        spacerItem6 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout.addItem(spacerItem6)
         self.b_trash = QtWidgets.QPushButton(self.centralwidget)
         font = QtGui.QFont()
         font.setFamily("Menlo")
@@ -139,8 +155,8 @@ class Ui_MainWindow(object):
 "}")
         self.b_trash.setObjectName("b_trash")
         self.horizontalLayout.addWidget(self.b_trash)
-        spacerItem6 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout.addItem(spacerItem6)
+        spacerItem7 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout.addItem(spacerItem7)
         self.horizontalLayout.setStretch(0, 1)
         self.horizontalLayout.setStretch(1, 1)
         self.horizontalLayout.setStretch(2, 1)
@@ -150,6 +166,8 @@ class Ui_MainWindow(object):
         self.horizontalLayout.setStretch(6, 1)
         self.horizontalLayout.setStretch(7, 1)
         self.horizontalLayout.setStretch(8, 1)
+        self.horizontalLayout.setStretch(9, 1)
+        self.horizontalLayout.setStretch(10, 1)
         self.verticalLayout_2.addLayout(self.horizontalLayout)
         self.verticalLayout_3.addLayout(self.verticalLayout_2)
         self.gridLayout.addLayout(self.verticalLayout_3, 0, 0, 1, 1)
@@ -167,7 +185,7 @@ class Ui_MainWindow(object):
 "(2)v. to give over unrestrainedly 放纵"))
         self.t_syn.setText(_translate("MainWindow", "desert, relinquish"))
         self.t_ex.setText(_translate("MainWindow", "The agency was responding to Republican Gov. Chris Sununu\'s announcement that it was time to abandon the \"ﬂawed project\" and has since called on all parties to agree on a plan that has community support."))
-        self.b_show_note.setText(_translate("MainWindow", "Automatically Show Note"))
+        self.b_show_note.setText(_translate("MainWindow", "Always show note"))
         self.t_note.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
@@ -175,6 +193,7 @@ class Ui_MainWindow(object):
 "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'Sinhala Sangam MN\';\"><br /></p></body></html>"))
         self.b_yes.setText(_translate("MainWindow", " Yes "))
         self.b_no.setText(_translate("MainWindow", " No "))
+        self.b_show.setText(_translate("MainWindow", "Show"))
         self.b_later.setText(_translate("MainWindow", "Later"))
         self.b_trash.setText(_translate("MainWindow", "Trash"))
 
