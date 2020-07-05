@@ -75,6 +75,40 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # QShortcut(QKeySequence('Ctrl+4'), self).activated.connect(lambda: self.next_word('later'))
         # QShortcut(QKeySequence('Ctrl+5'), self).activated.connect(lambda: self.next_word('trash'))
 
+        self.b_fn.installEventFilter(self)
+
+    def eventFilter(self, obj, event):
+        if event.type() == QtCore.QEvent.MouseButtonPress:
+            if event.button() == QtCore.Qt.LeftButton:
+                if obj == self.b_fn:
+                    self.fn_button('left')
+            elif event.button() == QtCore.Qt.RightButton:
+                if obj == self.b_fn:
+                    self.fn_button('right')
+            elif event.button() == QtCore.Qt.MiddleButton:
+                if obj == self.b_fn:
+                    self.fn_button('middle')
+        return QtCore.QObject.event(obj, event)
+
+    def fn_button(self, button):
+        """ Handles callback for Fn button """
+        assert button in ['left', 'right', 'middle']
+        if button == 'left':
+            if self.answer_hidden:
+                self.toggle_answer()
+            else:
+                self.next_word('yes')
+        elif button == 'right':
+            if self.answer_hidden:
+                self.toggle_answer()
+            else:
+                self.next_word('no')
+        elif button == 'middle':
+            if self.answer_hidden:
+                self.toggle_answer()
+            else:
+                self.next_word('to_eb')
+
     def page_changed(self, change):
         if change == 1:  # Table page
             self.backend.refresh_db_prediction()

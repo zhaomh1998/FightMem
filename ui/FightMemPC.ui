@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>742</width>
-    <height>842</height>
+    <width>793</width>
+    <height>813</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -191,7 +191,7 @@ p, li { white-space: pre-wrap; }
              </widget>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,1,1,1,1,1,1,1,1,1,1">
+             <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,1,1,1,1,1,1,1,1,1,1,1">
               <item>
                <spacer name="horizontalSpacer_4">
                 <property name="orientation">
@@ -302,7 +302,7 @@ p, li { white-space: pre-wrap; }
                </spacer>
               </item>
               <item>
-               <widget class="QPushButton" name="b_later">
+               <widget class="QPushButton" name="b_to_eb">
                 <property name="font">
                  <font>
                   <family>Menlo</family>
@@ -316,7 +316,7 @@ p, li { white-space: pre-wrap; }
 }</string>
                 </property>
                 <property name="text">
-                 <string>Later</string>
+                 <string>ToEb</string>
                 </property>
                </widget>
               </item>
@@ -365,6 +365,25 @@ p, li { white-space: pre-wrap; }
                 </property>
                </spacer>
               </item>
+              <item>
+               <widget class="QPushButton" name="b_fn">
+                <property name="font">
+                 <font>
+                  <family>Menlo</family>
+                  <pointsize>24</pointsize>
+                 </font>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QPushButton
+{
+   color:#018786;
+}</string>
+                </property>
+                <property name="text">
+                 <string> Fn </string>
+                </property>
+               </widget>
+              </item>
              </layout>
             </item>
            </layout>
@@ -392,6 +411,96 @@ p, li { white-space: pre-wrap; }
          <widget class="QTableView" name="t_table_new"/>
         </item>
        </layout>
+      </widget>
+      <widget class="QWidget" name="tab_4">
+       <attribute name="title">
+        <string>Setting</string>
+       </attribute>
+       <widget class="QWidget" name="">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>0</y>
+          <width>217</width>
+          <height>124</height>
+         </rect>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_4">
+         <item>
+          <widget class="QLabel" name="t_version">
+           <property name="text">
+            <string>Version Info</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_4">
+           <item>
+            <widget class="QLabel" name="label">
+             <property name="text">
+              <string>Eb Quiz Threshold         </string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QDoubleSpinBox" name="e_eb_thresh">
+             <property name="maximum">
+              <double>0.990000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.010000000000000</double>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_3">
+           <item>
+            <widget class="QLabel" name="label_2">
+             <property name="text">
+              <string>Newbie Quiz Threshold </string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QDoubleSpinBox" name="e_newbie_thresh">
+             <property name="maximum">
+              <double>0.990000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.010000000000000</double>
+             </property>
+             <property name="value">
+              <double>0.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_5">
+           <item>
+            <widget class="QLabel" name="label_3">
+             <property name="text">
+              <string>Newbie to Eb Threshold</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QSpinBox" name="e_newbie2eb_thresh">
+             <property name="minimum">
+              <number>1</number>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
       </widget>
      </widget>
     </item>
