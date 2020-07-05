@@ -19,6 +19,7 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.syn = 'Knowledge file load error'
         self.ex = 'Knowledge file load error'
         self.note = 'Knowledge file load error'
+        self.stat = None
         self.answer_hidden = True
 
         self.refresh_ui()
@@ -46,6 +47,15 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if self.b_show_note.checkState():
             self.t_note.show()
 
+        if self.stat is None:
+            self.t_stat.setText('')
+        else:
+            unseen_count = self.stat['unseen_count']
+            if self.stat['is_new']:
+                self.t_stat.setText(f'Unseen: {unseen_count}')
+            else:
+                correct_rate = self.stat['rate']
+                self.t_stat.setText(f'Correct: {correct_rate}, Unseen: {unseen_count}')
         self.repaint()
 
     def setup_callback(self):
@@ -62,13 +72,12 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         QShortcut(QKeySequence('Ctrl+1'), self).activated.connect(lambda: self.next_word('yes'))
         QShortcut(QKeySequence('Ctrl+2'), self).activated.connect(lambda: self.next_word('no'))
         QShortcut(QKeySequence('Ctrl+3'), self).activated.connect(lambda: self.toggle_answer())
-        QShortcut(QKeySequence('Ctrl+4'), self).activated.connect(lambda: self.next_word('later'))
-        QShortcut(QKeySequence('Ctrl+5'), self).activated.connect(lambda: self.next_word('trash'))
+        # QShortcut(QKeySequence('Ctrl+4'), self).activated.connect(lambda: self.next_word('later'))
+        # QShortcut(QKeySequence('Ctrl+5'), self).activated.connect(lambda: self.next_word('trash'))
 
     def page_changed(self, change):
         if change == 1:  # Table page
             self.backend.refresh_db_prediction()
-            print(self.backend.get_eb())
             model = DataFrameModel(self.backend.get_eb())
             self.t_table.setModel(model)
 
@@ -92,7 +101,7 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # Post current result to backend
         self.backend.set_quiz_result(result, self.t_note.toPlainText())
         # Get next info from backend
-        self.word, self.pron, self.mean, self.syn, self.ex, self.note = self.backend.get_next_quiz()
+        self.word, self.pron, self.mean, self.syn, self.ex, self.note, self.stat = self.backend.get_next_quiz()
         self.toggle_answer(force_to=True)
 
 

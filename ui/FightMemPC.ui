@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>710</width>
-    <height>818</height>
+    <width>742</width>
+    <height>842</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -149,7 +149,7 @@
            </spacer>
           </item>
           <item>
-           <layout class="QVBoxLayout" name="verticalLayout_2">
+           <layout class="QHBoxLayout" name="horizontalLayout_2">
             <item>
              <widget class="QCheckBox" name="b_show_note">
               <property name="font">
@@ -162,6 +162,17 @@
               </property>
              </widget>
             </item>
+            <item>
+             <widget class="QLabel" name="t_stat">
+              <property name="text">
+               <string>statistics</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout_2">
             <item>
              <widget class="QTextEdit" name="t_note">
               <property name="font">

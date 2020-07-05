@@ -30,10 +30,11 @@ class FightMem:
         return self.db['eb_data'][['word', 'score', 'model']]
 
     def refresh_db_prediction(self):
-        self.db['eb_data'] = self.db['eb_data'].apply(self.update_prediction_one_entry, axis=1)
+        self.db['eb_data'] = self.db['eb_data'].apply(self.eb_update_score, axis=1)
         self.db['eb_data'].sort_values(by='score', ascending=True, inplace=True)
+        self.db['eb_data'].reset_index(drop=True, inplace=True)
 
-    def update_prediction_one_entry(self, entry):
+    def eb_update_score(self, entry):
         entry['score'] = round(ebisu.predictRecall(
             prior=entry['model'],
             tnow=_time_diff_to_hr(entry['t_last'], datetime.now()),
@@ -41,7 +42,7 @@ class FightMem:
         ), 4)
         return entry
 
-    def new_entry(self, entry_id, total=0, correct=0, start_model=(4., 4., 12)):
+    def new_entry(self, entry_id, total=0, correct=0, start_model=(3., 3., 0.5)):
         data = self.knowledge.loc[entry_id].to_dict()
         self.db['eb_data'] = self.db['eb_data'].append({
             'id': entry_id,
@@ -55,37 +56,52 @@ class FightMem:
 
     def get_next_quiz(self):
         """ High level API to get next knowledge """
-        print("Getting next quiz item")
         self.refresh_db_prediction()
+        stat = dict()
         if self.db['eb_data'].shape[0] != 0 and self.db['eb_data'].iloc[0]['score'] < 0.8:
-            self.current_id = self.db['eb_data'].iloc[0, 'id']
-            entry = self.knowledge.iloc[self.current_id]
+            self.current_id = self.db['eb_data'].iloc[0]['id']
+            entry = self.knowledge.loc[self.current_id]
+            stat['is_new'] = False
+            stat['rate'] = self.db['eb_data'].iloc[0]['correct'] / self.db['eb_data'].iloc[0]['total']
         else:
             new_word_id = self.db['new_words'].pop()
-            entry = self.knowledge.iloc[new_word_id]
+            entry = self.knowledge.loc[new_word_id]
             self.current_id = new_word_id
+            stat['is_new'] = True
 
-        return entry['word'], entry['pron'], entry['mean'], entry['syn'], entry['ex'], entry['note']
+        stat['unseen_count'] = len(self.db['new_words'])
+        return entry['word'], entry['pron'], entry['mean'], entry['syn'], entry['ex'], entry['note'], stat
+
+    def eb_update_model(self, eb_df, correct):
+        item_index = eb_df[eb_df['id'] == self.current_id].index[0]
+        eb_df.loc[item_index, 'total'] += 1
+        eb_df.loc[item_index, 'correct'] += 1 if correct else 0
+        new_model = ebisu.updateRecall(
+            prior=eb_df.loc[item_index, 'model'],
+            successes=eb_df.loc[item_index, 'correct'],
+            total=eb_df.loc[item_index, 'total'],
+            tnow=_time_diff_to_hr(eb_df.loc[item_index, 't_last'], datetime.now())
+        )
+        eb_df.at[item_index, 'model'] = new_model  # Note: loc can't assign tuple to a cell
+        self.db['eb_data'].loc[item_index, 't_last'] = datetime.now()
 
     def set_quiz_result(self, result, note_updated):
         """ High level API to set quiz result """
         assert result in ['yes', 'no', 'later', 'trash', 'init']
         if result != 'init':
-            print(f"Setting {self.current_id} to {result}, new note {note_updated}")
             self.knowledge.loc[self.current_id, 'note'] = note_updated
 
-            if any(self.db['eb_data']['id'] == self.current_id):  # Word in EB Database
-                item = self.db['eb_data'][self.db['eb_data']['id'] == self.current_id]
-                item['t_last'] = datetime.now()
+            eb_df = self.db['eb_data']
+
+            if (eb_df['id'] == self.current_id).any():  # Word in EB Database
                 if result == 'yes':
-                    item['total'] += 1
-                    item['correct'] += 1
+                    self.eb_update_model(eb_df, correct=True)
                 elif result == 'no':
-                    item['total'] += 1
+                    self.eb_update_model(eb_df, correct=False)
                 elif result == 'later':
                     pass
                 elif result == 'trash':
-                    self.db['eb_data'].drop(item.index, inplace=True)
+                    self.db['eb_data'].drop(eb_df.loc[eb_df['id'] == self.current_id].index, inplace=True)
                 self.refresh_db_prediction()
             else:  # Add to EB Database
                 if result == 'yes':

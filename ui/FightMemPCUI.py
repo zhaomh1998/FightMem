@@ -13,7 +13,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(710, 818)
+        MainWindow.resize(742, 842)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.gridLayout = QtWidgets.QGridLayout(self.centralwidget)
@@ -79,14 +79,20 @@ class Ui_MainWindow(object):
         self.verticalLayout_3.addLayout(self.verticalLayout)
         spacerItem1 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout_3.addItem(spacerItem1)
-        self.verticalLayout_2 = QtWidgets.QVBoxLayout()
-        self.verticalLayout_2.setObjectName("verticalLayout_2")
+        self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_2.setObjectName("horizontalLayout_2")
         self.b_show_note = QtWidgets.QCheckBox(self.tab)
         font = QtGui.QFont()
         font.setFamily("Arial")
         self.b_show_note.setFont(font)
         self.b_show_note.setObjectName("b_show_note")
-        self.verticalLayout_2.addWidget(self.b_show_note)
+        self.horizontalLayout_2.addWidget(self.b_show_note)
+        self.t_stat = QtWidgets.QLabel(self.tab)
+        self.t_stat.setObjectName("t_stat")
+        self.horizontalLayout_2.addWidget(self.t_stat)
+        self.verticalLayout_3.addLayout(self.horizontalLayout_2)
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.t_note = QtWidgets.QTextEdit(self.tab)
         font = QtGui.QFont()
         font.setFamily("Hannotate SC")
@@ -203,6 +209,7 @@ class Ui_MainWindow(object):
         self.t_syn.setText(_translate("MainWindow", "desert, relinquish"))
         self.t_ex.setText(_translate("MainWindow", "The agency was responding to Republican Gov. Chris Sununu\'s announcement that it was time to abandon the \"ﬂawed project\" and has since called on all parties to agree on a plan that has community support."))
         self.b_show_note.setText(_translate("MainWindow", "Always show note"))
+        self.t_stat.setText(_translate("MainWindow", "statistics"))
         self.t_note.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
