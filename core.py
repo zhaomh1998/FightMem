@@ -4,6 +4,12 @@ import pandas as pd
 from datetime import datetime, timedelta
 import ebisu
 
+# Model Parameters
+_INIT_ALPHA = 3.
+_INIT_BETA = 3.
+_INIT_T = 0.5
+_QUIZ_THRESH = 0.7
+
 
 class FightMem:
     def __init__(self, knowledge_file, database_file=None):
@@ -27,7 +33,14 @@ class FightMem:
         self.current_id = None
 
     def get_eb(self):
-        return self.db['eb_data'][['word', 'score', 'model']]
+        df_display = self.db['eb_data'].copy()
+        df_display['HourPassed'] = df_display['t_last'].apply(
+            lambda x: round(_time_diff_to_hr(datetime.now(), x), 2)
+        )
+        df_display['Model_A'] = df_display['model'].apply(lambda x: round(x[0], 2))
+        df_display['Model_B'] = df_display['model'].apply(lambda x: round(x[1], 2))
+        df_display['Model_T'] = df_display['model'].apply(lambda x: round(x[2], 2))
+        return df_display[['word', 'score', 'HourPassed', 'Model_A', 'Model_B', 'Model_T']]
 
     def refresh_db_prediction(self):
         self.db['eb_data'] = self.db['eb_data'].apply(self.eb_update_score, axis=1)
@@ -42,7 +55,7 @@ class FightMem:
         ), 4)
         return entry
 
-    def new_entry(self, entry_id, total=0, correct=0, start_model=(3., 3., 0.5)):
+    def new_entry(self, entry_id, total=0, correct=0, start_model=(_INIT_ALPHA, _INIT_BETA, _INIT_T)):
         data = self.knowledge.loc[entry_id].to_dict()
         self.db['eb_data'] = self.db['eb_data'].append({
             'id': entry_id,
@@ -58,7 +71,7 @@ class FightMem:
         """ High level API to get next knowledge """
         self.refresh_db_prediction()
         stat = dict()
-        if self.db['eb_data'].shape[0] != 0 and self.db['eb_data'].iloc[0]['score'] < 0.8:
+        if self.db['eb_data'].shape[0] != 0 and self.db['eb_data'].iloc[0]['score'] < _QUIZ_THRESH:
             self.current_id = self.db['eb_data'].iloc[0]['id']
             entry = self.knowledge.loc[self.current_id]
             stat['is_new'] = False
