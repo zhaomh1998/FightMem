@@ -1,6 +1,7 @@
 import re
 import pickle
 import os
+import numpy as np
 import pandas as pd
 import pdfplumber
 
@@ -68,6 +69,9 @@ def run(in_file):
     data_df = pd.DataFrame(word_row)
     ex_df = pd.DataFrame(example)
     data_df = data_df.merge(ex_df, on='word', how='left')
+
+    # Fix some nan example sentence
+    data_df = data_df.replace(np.nan, '', regex=True)
 
     # Save output data
     out_filename = os.path.splitext(in_file)[0] + '.fmknowledge'

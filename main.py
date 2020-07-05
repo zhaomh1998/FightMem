@@ -64,7 +64,7 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.b_yes.clicked.connect(lambda x: self.next_word('yes'))
         self.b_no.clicked.connect(lambda x: self.next_word('no'))
-        self.b_later.clicked.connect(lambda x: self.next_word('later'))
+        self.b_to_eb.clicked.connect(lambda x: self.next_word('to_eb'))
         self.b_trash.clicked.connect(lambda x: self.next_word('trash'))
 
         self.tabWidget.currentChanged.connect(self.page_changed)
@@ -118,6 +118,12 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.backend.refresh_db_prediction()
             model = DataFrameModel(self.backend.get_new())
             self.t_table_new.setModel(model)
+        elif change == 3:
+            version_str, eb_thresh, newbie_thresh, newbie2eb_thresh = self.backend.get_setting()
+            self.t_version.setText(version_str)
+            self.e_eb_thresh.setValue(eb_thresh)
+            self.e_newbie_thresh.setValue(newbie_thresh)
+            self.e_newbie2eb_thresh.setValue(newbie2eb_thresh)
 
     def toggle_answer(self, force_to=None):
         if force_to is None:
