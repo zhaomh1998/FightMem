@@ -8,4 +8,7 @@ if __name__ == '__main__':
     fm.new_entry(3)
     fm.new_entry(4)
     fm.refresh_db_prediction()
-    print(fm.db)
+    # print(fm.get_eb())
+    print(fm.db['eb_data'])
+    import pickle
+    pickle.dump(fm.db['eb_data'], open('eb.pkl', 'wb'))
