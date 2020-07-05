@@ -1,10 +1,8 @@
 import re
 import pickle
-from datetime import datetime, timedelta
 import os
 import pandas as pd
 import pdfplumber
-import ebisu
 
 
 def parse_row(row, verbose=False):
@@ -47,7 +45,7 @@ def run(in_file):
 
     # Parse into DataFrame
     last_word = None
-    word_row = {'word': [], 'pron': [], 'mean': [], 'syn': []}
+    word_row = {'word': [], 'pron': [], 'mean': [], 'syn': [], 'note': []}
     example = {'word': [], 'ex': []}
 
     for row in all_rows:
@@ -61,6 +59,7 @@ def run(in_file):
                 word_row['pron'].append(pron)
                 word_row['mean'].append(mean)
                 word_row['syn'].append(syn)
+                word_row['note'].append('')
             else:
                 assert last_word is not None
                 example['word'].append(last_word)
@@ -72,7 +71,15 @@ def run(in_file):
 
     # Save output data
     out_filename = os.path.splitext(in_file)[0] + '.fmknowledge'
-    pickle.dump(data_df, open(out_filename, 'wb'))
+    if os.path.exists(out_filename):
+        choice = input(
+            f"\"{out_filename}\" exists and may contain user\'s notes. Provide a different name | [Y]es to overwrite\n")
+        if choice == 'Y' or choice == 'y':
+            pickle.dump(data_df, open(out_filename, 'wb'))
+        else:
+            pickle.dump(data_df, open(choice, 'wb'))
+    else:
+        pickle.dump(data_df, open(out_filename, 'wb'))
 
 
 if __name__ == '__main__':

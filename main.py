@@ -1,8 +1,9 @@
-import sys
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import QShortcut
 from ui.FightMemPCUI import *
 import core
+from ui.DataFrameView import DataFrameModel
+import sys
 
 
 class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
@@ -22,6 +23,7 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.refresh_ui()
         self.setup_callback()
+        self.next_word('init')
 
     def refresh_ui(self):
         self.t_word.setText(self.word)
@@ -55,12 +57,20 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.b_later.clicked.connect(lambda x: self.next_word('later'))
         self.b_trash.clicked.connect(lambda x: self.next_word('trash'))
 
+        self.tabWidget.currentChanged.connect(self.page_changed)
         # self.shortcut_open = QShortcut(QKeySequence('Ctrl+O'), self)
         QShortcut(QKeySequence('Ctrl+1'), self).activated.connect(lambda: self.next_word('yes'))
         QShortcut(QKeySequence('Ctrl+2'), self).activated.connect(lambda: self.next_word('no'))
         QShortcut(QKeySequence('Ctrl+3'), self).activated.connect(lambda: self.toggle_answer())
         QShortcut(QKeySequence('Ctrl+4'), self).activated.connect(lambda: self.next_word('later'))
         QShortcut(QKeySequence('Ctrl+5'), self).activated.connect(lambda: self.next_word('trash'))
+
+    def page_changed(self, change):
+        if change == 1:  # Table page
+            self.backend.refresh_db_prediction()
+            print(self.backend.get_eb())
+            model = DataFrameModel(self.backend.get_eb())
+            self.t_table.setModel(model)
 
     def toggle_answer(self, force_to=None):
         if force_to is None:
@@ -79,12 +89,12 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.refresh_ui()
 
     def next_word(self, result):
-        print(result)
         # Post current result to backend
-
+        self.backend.set_quiz_result(result, self.t_note.toPlainText())
         # Get next info from backend
-        # self.word, self.pron, self.mean, self.syn, self.ex, self.note = self.backend.get_next_quiz()
-        # self.toggle_answer(force_to=True)
+        self.word, self.pron, self.mean, self.syn, self.ex, self.note = self.backend.get_next_quiz()
+        self.toggle_answer(force_to=True)
+
 
 if __name__ == "__main__":
     sys.argv += ['--ignore-gpu-blacklist']  # Fix OpenGL Error for QWebEngineView on MacOS
