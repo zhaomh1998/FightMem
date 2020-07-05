@@ -3,13 +3,8 @@ import os
 import pandas as pd
 from datetime import datetime, timedelta
 import ebisu
-
-# Model Parameters
-_EB_MODEL = (3., 3., 0.5)
-_EB_QUIZ_THRESH = 0.7
-_NEWBIE_MODEL = (1.5, 1.5, 0.1)
-_NEWBIE_QUIZ_THRESH = 0.9
-_NEWBIE_TO_EB_THRESH = 3
+from parameter import EB_MODEL, EB_QUIZ_THRESH_DEFAULT, \
+    NEWBIE_MODEL, NEWBIE_QUIZ_THRESH_DEFAULT, NEWBIE_TO_EB_THRESH_DEFAULT
 
 
 class FightMem:
@@ -24,12 +19,16 @@ class FightMem:
         else:
             self.db_path = database_file
         if os.path.exists(self.db_path):
-            self.db = pickle.load(open(self.db_path, 'rb'))
+            self.db = _load_update_db(self.db_path)
         else:
             self.db = {
                 'eb_data': pd.DataFrame(columns=['id', 'word', 'model', 'total', 'correct', 't_last', 'score']),
                 'newbie_data': pd.DataFrame(columns=['id', 'word', 'model', 'total', 'correct', 't_last', 'score']),
-                'new_words': set(range(self.knowledge.shape[0]))
+                'new_words': set(range(self.knowledge.shape[0])),
+                'eb_thresh': EB_QUIZ_THRESH_DEFAULT,
+                'newbie_thresh': NEWBIE_QUIZ_THRESH_DEFAULT,
+                'newbie2eb_thresh': NEWBIE_TO_EB_THRESH_DEFAULT,
+                'db_version': ('Beta', 1, 1)
             }
 
         self.current_id = None
@@ -51,6 +50,25 @@ class FightMem:
         )
         return df_display[['word', 'score', 'MinPassed', 'correct']]
 
+    def get_setting(self):
+        version = self.db['db_version']
+        version_str = f"{version[0]} V{version[1]}.{version[2]}"
+        return version_str, self.db['eb_thresh'], self.db['newbie_thresh'], self.db['newbie2eb_thresh']
+
+    def set_setting(self, eb_thresh=None, newbie_thresh=None, newbie2eb_thresh=None):
+        if eb_thresh is not None:
+            assert isinstance(eb_thresh, float)
+            assert 0 < eb_thresh < 1
+            self.db['eb_thresh'] = eb_thresh
+        if newbie_thresh is not None:
+            assert isinstance(newbie_thresh, float)
+            assert 0 < newbie_thresh < 1
+            self.db['newbie_thresh'] = newbie_thresh
+        if newbie2eb_thresh is not None:
+            assert isinstance(newbie2eb_thresh, int)
+            assert newbie2eb_thresh > 0
+            self.db['newbie2eb_thresh'] = newbie2eb_thresh
+
     def refresh_db_prediction(self):
         for db_name in ['eb_data', 'newbie_data']:
             self.db[db_name] = self.db[db_name].apply(self.eb_update_score, axis=1)
@@ -65,7 +83,7 @@ class FightMem:
         ), 4)
         return entry
 
-    def new_entry(self, db_name, entry_id, total=0, correct=0, start_model=_EB_MODEL):
+    def new_entry(self, db_name, entry_id, total=0, correct=0, start_model=EB_MODEL):
         # db_name: eb_data or newbie_data
         assert isinstance(db_name, str)
         assert db_name in self.db.keys()
@@ -89,12 +107,12 @@ class FightMem:
         # Third priority get new words into Newbie
         eb_db = self.db['eb_data']
         new_db = self.db['newbie_data']
-        if eb_db.shape[0] != 0 and eb_db.iloc[0]['score'] < _EB_QUIZ_THRESH:
+        if eb_db.shape[0] != 0 and eb_db.iloc[0]['score'] < self.db['eb_thresh']:
             self.current_id = eb_db.iloc[0]['id']
             entry = self.knowledge.loc[self.current_id]
             stat['is_new'] = False
             stat['rate'] = eb_db.iloc[0]['correct'] / eb_db.iloc[0]['total']
-        elif new_db.shape[0] != 0 and new_db.iloc[0]['score'] < _NEWBIE_QUIZ_THRESH:
+        elif new_db.shape[0] != 0 and new_db.iloc[0]['score'] < self.db['newbie_thresh']:
             self.current_id = new_db.iloc[0]['id']
             entry = self.knowledge.loc[self.current_id]
             stat['is_new'] = False
@@ -123,7 +141,7 @@ class FightMem:
 
     def set_quiz_result(self, result, note_updated):
         """ High level API to set quiz result """
-        assert result in ['yes', 'no', 'later', 'trash', 'init']
+        assert result in ['yes', 'no', 'to_eb', 'trash', 'init']
         if result != 'init':
             self.knowledge.loc[self.current_id, 'note'] = note_updated
 
@@ -134,8 +152,9 @@ class FightMem:
                     self.eb_update_model(eb_df, correct=True)
                 elif result == 'no':
                     self.eb_update_model(eb_df, correct=False)
-                elif result == 'later':
-                    # FIXME: This item will still be chosen for new word
+                elif result == 'to_eb':
+                    # No action taken -- Already in eb
+                    # TODO: Make it ToNew instead
                     pass
                 elif result == 'trash':
                     eb_df.drop(eb_df.loc[eb_df['id'] == self.current_id].index, inplace=True)
@@ -147,7 +166,7 @@ class FightMem:
                     self.eb_update_model(newbie_df, correct=True)
                     correct = newbie_df.at[entry_index[0], 'correct']
                     # Add to EB Database if correct more than <_NEW_WORD_TO_DB_THRESHOLD> times
-                    if correct > _NEWBIE_TO_EB_THRESH:
+                    if correct > self.db['newbie2eb_thresh']:
                         newbie_df.drop(entry_index, inplace=True)
                         self.new_entry('eb_data', self.current_id, total=1, correct=1)
                 elif result == 'no':
@@ -156,20 +175,20 @@ class FightMem:
                     # Punish as wrong answer provided: correct - 1
                     if correct > 0:
                         newbie_df.at[entry_index[0], 'correct'] -= 1
-                elif result == 'later':
-                    # FIXME: This item will still be chosen for new word
-                    pass
+                elif result == 'to_eb':
+                    newbie_df.drop(entry_index, inplace=True)
+                    self.new_entry('eb_data', self.current_id, total=1, correct=1)
                 elif result == 'trash':
                     newbie_df.drop(entry_index, inplace=True)
                 self.refresh_db_prediction()
 
             else:  # Add to Newbie Word Database
                 if result == 'yes':
-                    self.new_entry('newbie_data', self.current_id, total=1, correct=1, start_model=_NEWBIE_MODEL)
+                    self.new_entry('newbie_data', self.current_id, total=1, correct=1, start_model=NEWBIE_MODEL)
                 elif result == 'no':
-                    self.new_entry('newbie_data', self.current_id, total=1, correct=0, start_model=_NEWBIE_MODEL)
-                elif result == 'later':
-                    self.new_entry('newbie_data', self.current_id, total=1, correct=1, start_model=_NEWBIE_MODEL)
+                    self.new_entry('newbie_data', self.current_id, total=1, correct=0, start_model=NEWBIE_MODEL)
+                elif result == 'to_eb':
+                    self.new_entry('eb_data', self.current_id, total=1, correct=1)
                 elif result == 'trash':
                     pass  # Does not add to review list
 
@@ -183,3 +202,24 @@ class FightMem:
 def _time_diff_to_hr(time_a, time_b):
     one_hour = timedelta(hours=1)
     return abs((time_a - time_b) / one_hour)
+
+
+def _load_update_db(path):
+    assert os.path.exists(path)
+    db = pickle.load(open(path, 'rb'))
+    if isinstance(db, dict):
+        # Beta 1.0 to beta 1.1
+        if sorted(db.keys()) == ['eb_data', 'new_words', 'newbie_data']:
+            db['eb_thresh'] = EB_QUIZ_THRESH_DEFAULT
+            db['newbie_thresh'] = NEWBIE_QUIZ_THRESH_DEFAULT
+            db['newbie2eb_thresh'] = NEWBIE_TO_EB_THRESH_DEFAULT
+            db['db_version'] = ('Beta', 1, 1)
+            print("Database Updated [Beta V1.0] -> [Beta V1.1]")
+        elif db['db_version'] == ('Beta', 1, 1):
+            print("Database is up-to-date [Beta V1.1]")
+        else:
+            raise RuntimeError("Database cannot be recognized by update utility!")
+
+        return db
+    else:
+        raise RuntimeError("Database cannot be recognized by update utility!")
