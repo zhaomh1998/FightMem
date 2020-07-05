@@ -5,10 +5,11 @@ from datetime import datetime, timedelta
 import ebisu
 
 # Model Parameters
-_INIT_ALPHA = 3.
-_INIT_BETA = 3.
-_INIT_T = 0.5
-_QUIZ_THRESH = 0.7
+_EB_MODEL = (3., 3., 0.5)
+_EB_QUIZ_THRESH = 0.7
+_NEWBIE_MODEL = (1.5, 1.5, 0.1)
+_NEWBIE_QUIZ_THRESH = 0.9
+_NEWBIE_TO_EB_THRESH = 3
 
 
 class FightMem:
@@ -27,6 +28,7 @@ class FightMem:
         else:
             self.db = {
                 'eb_data': pd.DataFrame(columns=['id', 'word', 'model', 'total', 'correct', 't_last', 'score']),
+                'newbie_data': pd.DataFrame(columns=['id', 'word', 'model', 'total', 'correct', 't_last', 'score']),
                 'new_words': set(range(self.knowledge.shape[0]))
             }
 
@@ -42,10 +44,18 @@ class FightMem:
         df_display['Model_T'] = df_display['model'].apply(lambda x: round(x[2], 2))
         return df_display[['word', 'score', 'HourPassed', 'Model_A', 'Model_B', 'Model_T']]
 
+    def get_new(self):
+        df_display = self.db['newbie_data'].copy()
+        df_display['MinPassed'] = df_display['t_last'].apply(
+            lambda x: round(_time_diff_to_hr(datetime.now(), x) * 60, 2)
+        )
+        return df_display[['word', 'score', 'MinPassed', 'correct']]
+
     def refresh_db_prediction(self):
-        self.db['eb_data'] = self.db['eb_data'].apply(self.eb_update_score, axis=1)
-        self.db['eb_data'].sort_values(by='score', ascending=True, inplace=True)
-        self.db['eb_data'].reset_index(drop=True, inplace=True)
+        for db_name in ['eb_data', 'newbie_data']:
+            self.db[db_name] = self.db[db_name].apply(self.eb_update_score, axis=1)
+            self.db[db_name].sort_values(by='score', ascending=True, inplace=True)
+            self.db[db_name].reset_index(drop=True, inplace=True)
 
     def eb_update_score(self, entry):
         entry['score'] = round(ebisu.predictRecall(
@@ -55,9 +65,12 @@ class FightMem:
         ), 4)
         return entry
 
-    def new_entry(self, entry_id, total=0, correct=0, start_model=(_INIT_ALPHA, _INIT_BETA, _INIT_T)):
+    def new_entry(self, db_name, entry_id, total=0, correct=0, start_model=_EB_MODEL):
+        # db_name: eb_data or newbie_data
+        assert isinstance(db_name, str)
+        assert db_name in self.db.keys()
         data = self.knowledge.loc[entry_id].to_dict()
-        self.db['eb_data'] = self.db['eb_data'].append({
+        self.db[db_name] = self.db[db_name].append({
             'id': entry_id,
             'word': data['word'],
             'model': start_model,
@@ -71,11 +84,21 @@ class FightMem:
         """ High level API to get next knowledge """
         self.refresh_db_prediction()
         stat = dict()
-        if self.db['eb_data'].shape[0] != 0 and self.db['eb_data'].iloc[0]['score'] < _QUIZ_THRESH:
-            self.current_id = self.db['eb_data'].iloc[0]['id']
+        # First priority review EB
+        # Second priority get Newbie into EB
+        # Third priority get new words into Newbie
+        eb_db = self.db['eb_data']
+        new_db = self.db['newbie_data']
+        if eb_db.shape[0] != 0 and eb_db.iloc[0]['score'] < _EB_QUIZ_THRESH:
+            self.current_id = eb_db.iloc[0]['id']
             entry = self.knowledge.loc[self.current_id]
             stat['is_new'] = False
-            stat['rate'] = self.db['eb_data'].iloc[0]['correct'] / self.db['eb_data'].iloc[0]['total']
+            stat['rate'] = eb_db.iloc[0]['correct'] / eb_db.iloc[0]['total']
+        elif new_db.shape[0] != 0 and new_db.iloc[0]['score'] < _NEWBIE_QUIZ_THRESH:
+            self.current_id = new_db.iloc[0]['id']
+            entry = self.knowledge.loc[self.current_id]
+            stat['is_new'] = False
+            stat['rate'] = new_db.iloc[0]['correct'] / new_db.iloc[0]['total']
         else:
             new_word_id = self.db['new_words'].pop()
             entry = self.knowledge.loc[new_word_id]
@@ -96,7 +119,7 @@ class FightMem:
             tnow=_time_diff_to_hr(eb_df.loc[item_index, 't_last'], datetime.now())
         )
         eb_df.at[item_index, 'model'] = new_model  # Note: loc can't assign tuple to a cell
-        self.db['eb_data'].loc[item_index, 't_last'] = datetime.now()
+        eb_df.loc[item_index, 't_last'] = datetime.now()
 
     def set_quiz_result(self, result, note_updated):
         """ High level API to set quiz result """
@@ -105,24 +128,48 @@ class FightMem:
             self.knowledge.loc[self.current_id, 'note'] = note_updated
 
             eb_df = self.db['eb_data']
-
+            newbie_df = self.db['newbie_data']
             if (eb_df['id'] == self.current_id).any():  # Word in EB Database
                 if result == 'yes':
                     self.eb_update_model(eb_df, correct=True)
                 elif result == 'no':
                     self.eb_update_model(eb_df, correct=False)
                 elif result == 'later':
+                    # FIXME: This item will still be chosen for new word
                     pass
                 elif result == 'trash':
-                    self.db['eb_data'].drop(eb_df.loc[eb_df['id'] == self.current_id].index, inplace=True)
+                    eb_df.drop(eb_df.loc[eb_df['id'] == self.current_id].index, inplace=True)
                 self.refresh_db_prediction()
-            else:  # Add to EB Database
+
+            elif (newbie_df['id'] == self.current_id).any():  # Word in Newbie Database
+                entry_index = newbie_df[newbie_df['id'] == self.current_id].index
                 if result == 'yes':
-                    self.new_entry(self.current_id, total=1, correct=1)
+                    self.eb_update_model(newbie_df, correct=True)
+                    correct = newbie_df.at[entry_index[0], 'correct']
+                    # Add to EB Database if correct more than <_NEW_WORD_TO_DB_THRESHOLD> times
+                    if correct > _NEWBIE_TO_EB_THRESH:
+                        newbie_df.drop(entry_index, inplace=True)
+                        self.new_entry('eb_data', self.current_id, total=1, correct=1)
                 elif result == 'no':
-                    self.new_entry(self.current_id, total=1, correct=0)
+                    self.eb_update_model(newbie_df, correct=False)
+                    correct = newbie_df.at[entry_index[0], 'correct']
+                    # Punish as wrong answer provided: correct - 1
+                    if correct > 0:
+                        newbie_df.at[entry_index[0], 'correct'] -= 1
                 elif result == 'later':
-                    self.new_entry(self.current_id, total=1, correct=1)
+                    # FIXME: This item will still be chosen for new word
+                    pass
+                elif result == 'trash':
+                    newbie_df.drop(entry_index, inplace=True)
+                self.refresh_db_prediction()
+
+            else:  # Add to Newbie Word Database
+                if result == 'yes':
+                    self.new_entry('newbie_data', self.current_id, total=1, correct=1, start_model=_NEWBIE_MODEL)
+                elif result == 'no':
+                    self.new_entry('newbie_data', self.current_id, total=1, correct=0, start_model=_NEWBIE_MODEL)
+                elif result == 'later':
+                    self.new_entry('newbie_data', self.current_id, total=1, correct=1, start_model=_NEWBIE_MODEL)
                 elif result == 'trash':
                     pass  # Does not add to review list
 

@@ -79,7 +79,11 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if change == 1:  # Table page
             self.backend.refresh_db_prediction()
             model = DataFrameModel(self.backend.get_eb())
-            self.t_table.setModel(model)
+            self.t_table_eb.setModel(model)
+        elif change == 2:
+            self.backend.refresh_db_prediction()
+            model = DataFrameModel(self.backend.get_new())
+            self.t_table_new.setModel(model)
 
     def toggle_answer(self, force_to=None):
         if force_to is None:
