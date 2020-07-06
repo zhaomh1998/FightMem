@@ -75,6 +75,16 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.e_newbie_thresh.valueChanged.connect(lambda x: self.backend.set_setting(newbie_thresh=x))
         self.e_newbie2eb_thresh.valueChanged.connect(lambda x: self.backend.set_setting(newbie2eb_thresh=x))
 
+        self.t_table_eb.doubleClicked.connect(self.query_knowledge)
+        self.t_table_new.doubleClicked.connect(self.query_knowledge)
+
+    def query_knowledge(self, item):
+        if item.column() == 0:
+            self.word, self.pron, self.mean, self.syn, self.ex, self.note, self.stat = \
+                self.backend.get_knowledge(item.data())
+            self.tabWidget.setCurrentIndex(0)
+            self.toggle_answer(force_to=False)
+
     def eventFilter(self, obj, event):
         if event.type() == QtCore.QEvent.MouseButtonPress or event.type() == QtCore.QEvent.MouseButtonDblClick:
             if event.button() == QtCore.Qt.LeftButton:

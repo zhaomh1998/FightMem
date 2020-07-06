@@ -26,7 +26,10 @@ python main.py
 ## Todo List
 - [x] Function Key with left click Yes, right click No
 - [x] User configurable parameters
+- [ ] Customized mark for entries to be displayed before solution
+- [ ] Ordered mode (order by ID instead of score)
+- [ ] Different way to present multiple new knowledge entry (table?)
 - [ ] Undo last action
-- [ ] Trashcan Page
+- [ ] Trash can Page
 - [ ] Explore / Table Review Mode (especially adjacent knowledge)
-- [ ] ToNewbie table button
+- [ ] ToNewbie table button (to start over)
