@@ -76,7 +76,7 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.e_newbie2eb_thresh.valueChanged.connect(lambda x: self.backend.set_setting(newbie2eb_thresh=x))
 
     def eventFilter(self, obj, event):
-        if event.type() == QtCore.QEvent.MouseButtonPress:
+        if event.type() == QtCore.QEvent.MouseButtonPress or event.type() == QtCore.QEvent.MouseButtonDblClick:
             if event.button() == QtCore.Qt.LeftButton:
                 if obj == self.b_fn:
                     self.fn_button('left')

@@ -22,6 +22,7 @@ python main.py
 ## Todo List
 - [x] Function Key with left click Yes, right click No
 - [x] User configurable parameters
+- [ ] Undo last action
 - [ ] Trashcan Page
 - [ ] Explore / Table Review Mode
 - [ ] ToNewbie table button
