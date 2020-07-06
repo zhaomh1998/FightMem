@@ -66,16 +66,18 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.b_no.clicked.connect(lambda x: self.next_word('no'))
         self.b_to_eb.clicked.connect(lambda x: self.next_word('to_eb'))
         self.b_trash.clicked.connect(lambda x: self.next_word('trash'))
+        self.b_fn.installEventFilter(self)
 
         self.tabWidget.currentChanged.connect(self.page_changed)
-        # self.shortcut_open = QShortcut(QKeySequence('Ctrl+O'), self)
         QShortcut(QKeySequence('Ctrl+1'), self).activated.connect(lambda: self.next_word('yes'))
         QShortcut(QKeySequence('Ctrl+2'), self).activated.connect(lambda: self.next_word('no'))
         QShortcut(QKeySequence('Ctrl+3'), self).activated.connect(lambda: self.toggle_answer())
         # QShortcut(QKeySequence('Ctrl+4'), self).activated.connect(lambda: self.next_word('later'))
         # QShortcut(QKeySequence('Ctrl+5'), self).activated.connect(lambda: self.next_word('trash'))
 
-        self.b_fn.installEventFilter(self)
+        self.e_eb_thresh.valueChanged.connect(lambda x: self.backend.set_setting(eb_thresh=x))
+        self.e_newbie_thresh.valueChanged.connect(lambda x: self.backend.set_setting(newbie_thresh=x))
+        self.e_newbie2eb_thresh.valueChanged.connect(lambda x: self.backend.set_setting(newbie2eb_thresh=x))
 
     def eventFilter(self, obj, event):
         if event.type() == QtCore.QEvent.MouseButtonPress:

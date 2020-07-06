@@ -59,11 +59,11 @@ class FightMem:
         if eb_thresh is not None:
             assert isinstance(eb_thresh, float)
             assert 0 < eb_thresh < 1
-            self.db['eb_thresh'] = eb_thresh
+            self.db['eb_thresh'] = round(eb_thresh, 2)
         if newbie_thresh is not None:
             assert isinstance(newbie_thresh, float)
             assert 0 < newbie_thresh < 1
-            self.db['newbie_thresh'] = newbie_thresh
+            self.db['newbie_thresh'] = round(newbie_thresh, 2)
         if newbie2eb_thresh is not None:
             assert isinstance(newbie2eb_thresh, int)
             assert newbie2eb_thresh > 0

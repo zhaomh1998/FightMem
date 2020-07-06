@@ -19,7 +19,7 @@ To run the GUI,
 python main.py
 ```
 
-##Todo List
+## Todo List
 - [x] Function Key with left click Yes, right click No
 - [x] User configurable parameters
 - [ ] Trashcan Page
