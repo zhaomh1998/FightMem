@@ -1,6 +1,9 @@
 # Project FightMem
 A customized Ebbinghaus Quizzing / Flash Cards App built with PyQt5.
 
+Learn Page            |  Ebbinghaus Statistics Table
+:-------------------------:|:-------------------------:
+![](screenshots/main.png)  |  ![](screenshots/table.png)
 Frontend designed to work for memorizing words specifically but could be easily modified.
 
 Backend powered by [Ebisu](https://github.com/fasiha/ebisu "Ebisu"). In the current version it contains two Ebisu lists:
@@ -24,5 +27,5 @@ python main.py
 - [x] User configurable parameters
 - [ ] Undo last action
 - [ ] Trashcan Page
-- [ ] Explore / Table Review Mode
+- [ ] Explore / Table Review Mode (especially adjacent knowledge)
 - [ ] ToNewbie table button

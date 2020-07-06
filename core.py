@@ -117,7 +117,7 @@ class FightMem:
             self.current_id = new_db.iloc[0]['id']
             entry = self.knowledge.loc[self.current_id]
             stat += '[Newbie] Correct ' + str(new_db.iloc[0]['correct']) + '/'\
-                    + str(new_db.iloc[0]['total']) + '=\t' + \
+                    + str(new_db.iloc[0]['total']) + ' = ' + \
                     str(round(new_db.iloc[0]['correct'] / new_db.iloc[0]['total'], 2)*100) + '%\n'
         else:
             new_word_id = self.db['new_words'].pop()
