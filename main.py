@@ -50,12 +50,8 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if self.stat is None:
             self.t_stat.setText('')
         else:
-            unseen_count = self.stat['unseen_count']
-            if self.stat['is_new']:
-                self.t_stat.setText(f'Unseen: {unseen_count}')
-            else:
-                correct_rate = self.stat['rate']
-                self.t_stat.setText(f'Correct: {correct_rate}, Unseen: {unseen_count}')
+            assert isinstance(self.stat, str)
+            self.t_stat.setText(self.stat)
         self.repaint()
 
     def setup_callback(self):

@@ -101,7 +101,7 @@ class FightMem:
     def get_next_quiz(self):
         """ High level API to get next knowledge """
         self.refresh_db_prediction()
-        stat = dict()
+        stat = ''
         # First priority review EB
         # Second priority get Newbie into EB
         # Third priority get new words into Newbie
@@ -110,20 +110,22 @@ class FightMem:
         if eb_db.shape[0] != 0 and eb_db.iloc[0]['score'] < self.db['eb_thresh']:
             self.current_id = eb_db.iloc[0]['id']
             entry = self.knowledge.loc[self.current_id]
-            stat['is_new'] = False
-            stat['rate'] = eb_db.iloc[0]['correct'] / eb_db.iloc[0]['total']
+            stat += '[Eb]     Correct ' + str(eb_db.iloc[0]['correct']) + '/'\
+                    + str(eb_db.iloc[0]['total']) + ' = ' + \
+                    str(round(eb_db.iloc[0]['correct'] * 100 / eb_db.iloc[0]['total'], 2)) + '%\n'
         elif new_db.shape[0] != 0 and new_db.iloc[0]['score'] < self.db['newbie_thresh']:
             self.current_id = new_db.iloc[0]['id']
             entry = self.knowledge.loc[self.current_id]
-            stat['is_new'] = False
-            stat['rate'] = new_db.iloc[0]['correct'] / new_db.iloc[0]['total']
+            stat += '[Newbie] Correct ' + str(new_db.iloc[0]['correct']) + '/'\
+                    + str(new_db.iloc[0]['total']) + '=\t' + \
+                    str(round(new_db.iloc[0]['correct'] / new_db.iloc[0]['total'], 2)*100) + '%\n'
         else:
             new_word_id = self.db['new_words'].pop()
             entry = self.knowledge.loc[new_word_id]
             self.current_id = new_word_id
-            stat['is_new'] = True
+            stat += 'New Knowledge\t'
 
-        stat['unseen_count'] = len(self.db['new_words'])
+        stat += '            Remaining: ' + str(len(self.db['new_words']))
         return entry['word'], entry['pron'], entry['mean'], entry['syn'], entry['ex'], entry['note'], stat
 
     def eb_update_model(self, eb_df, correct):
