@@ -1,5 +1,6 @@
 import pickle
 import os
+import numbers
 import pandas as pd
 from datetime import datetime, timedelta
 import ebisu
@@ -107,6 +108,7 @@ class FightMem:
         # Third priority get new words into Newbie
         eb_db = self.db['eb_data']
         new_db = self.db['newbie_data']
+        # TODO: Refactor to which entry to test
         if eb_db.shape[0] != 0 and eb_db.iloc[0]['score'] < self.db['eb_thresh']:
             self.current_id = eb_db.iloc[0]['id']
             entry = self.knowledge.loc[self.current_id]
@@ -118,13 +120,14 @@ class FightMem:
             entry = self.knowledge.loc[self.current_id]
             stat += '[Newbie] Correct ' + str(new_db.iloc[0]['correct']) + '/' \
                     + str(new_db.iloc[0]['total']) + ' = ' + \
-                    str(round(new_db.iloc[0]['correct'] / new_db.iloc[0]['total'], 2) * 100) + '%\n'
+                    str(round(new_db.iloc[0]['correct'] * 100 / new_db.iloc[0]['total'], 2)) + '%\n'
         else:
             new_word_id = self.db['new_words'].pop()
             entry = self.knowledge.loc[new_word_id]
             self.current_id = new_word_id
             stat += 'New Knowledge\t'
 
+        assert isinstance(self.current_id, numbers.Integral)
         stat += '            Remaining: ' + str(len(self.db['new_words']))
         return entry['word'], entry['pron'], entry['mean'], entry['syn'], entry['ex'], entry['note'], stat
 
@@ -132,7 +135,6 @@ class FightMem:
         """ High level API to get a specific knowledge """
         entry = self.knowledge[self.knowledge['word'] == knowledge_str].iloc[0]
         self.current_id = entry.name
-        print(self.current_id)
         stat = ''
         stat += '            Remaining: ' + str(len(self.db['new_words']))
         return entry['word'], entry['pron'], entry['mean'], entry['syn'], entry['ex'], entry['note'], stat
@@ -152,7 +154,6 @@ class FightMem:
 
     def set_quiz_result(self, result, note_updated):
         """ High level API to set quiz result """
-        print(f"Set Result {self.current_id}")
         assert result in ['yes', 'no', 'to_eb', 'trash', 'init']
         if result != 'init':
             self.knowledge.loc[self.current_id, 'note'] = note_updated
