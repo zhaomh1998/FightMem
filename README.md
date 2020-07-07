@@ -39,6 +39,6 @@ python main.py
 - [ ] Explore / Table Review Mode (especially adjacent knowledge)
 - [ ] ToNewbie table button (to start over)
 
-### Beta 1.3
+### Beta 1.2
 - [ ] No more quiz today for a word
 - [ ] Too much consecutive No should downgrade Eb to Newbie
