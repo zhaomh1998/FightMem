@@ -117,9 +117,8 @@
              <widget class="QLabel" name="t_ex">
               <property name="font">
                <font>
-                <family>Hiragino Sans</family>
+                <family>Courier New</family>
                 <pointsize>17</pointsize>
-                <kerning>false</kerning>
                </font>
               </property>
               <property name="text">
