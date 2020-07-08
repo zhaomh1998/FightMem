@@ -33,7 +33,7 @@ python main.py
 - [ ] Different way to present multiple new knowledge entry (table?)
 - [ ] Word count more details (today, past week, ...)
 - [ ] Eb / Newbie only quiz-mode
-- [ ] Auto backup database at startup
+- [x] Auto backup database at startup
 - [ ] Undo last action
 - [ ] Trash can Page
 - [ ] Explore / Table Review Mode (especially adjacent knowledge)
@@ -42,3 +42,4 @@ python main.py
 ### Beta 1.2
 - [ ] No more quiz today for a word
 - [ ] Too much consecutive No should downgrade Eb to Newbie
+- [ ] Search functionality for each table

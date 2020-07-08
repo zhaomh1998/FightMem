@@ -1,6 +1,7 @@
 import pickle
 import os
 import numbers
+import shutil
 import pandas as pd
 from datetime import datetime, timedelta
 import ebisu
@@ -12,6 +13,9 @@ class FightMem:
     def __init__(self, knowledge_file, database_file=None):
         assert os.path.exists(knowledge_file), f'Cannot locate <{knowledge_file}>. Please check!'
         self.knowledge_path = knowledge_file
+        now = datetime.now()
+        bak_extension = '_' + now.strftime('%m_%d_%Y__%H_%M_%S') + '.bak'
+        shutil.copyfile(self.knowledge_path, self.knowledge_path + bak_extension)
         self.knowledge = pickle.load(open(knowledge_file, 'rb'))
         assert isinstance(self.knowledge, pd.DataFrame)
 
@@ -20,6 +24,7 @@ class FightMem:
         else:
             self.db_path = database_file
         if os.path.exists(self.db_path):
+            shutil.copyfile(self.db_path, self.db_path + bak_extension)
             self.db = _load_update_db(self.db_path)
         else:
             self.db = {
