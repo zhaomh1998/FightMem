@@ -123,26 +123,54 @@ class FightMem:
             'triangle': triangle
         }, ignore_index=True)
 
-    def get_next_quiz(self):
+    def get_next_quiz(self, review_mode):
         """ High level API to get next knowledge """
-        self.refresh_db_prediction()
-        stat = ''
-        # First priority review EB
-        # Second priority get Newbie into EB
-        # Third priority get new words into Newbie
+        assert isinstance(review_mode, str) and review_mode in ['Normal', 'Eb Table Only', 'Newbie Table Only',
+                                                                'Starred', 'Triangled']
+        self.refresh_db_prediction()  # Required -- this sorts DBs by score
         eb_db = self.db['eb_data']
         newbie_db = self.db['newbie_data']
-        # TODO: Refactor to which entry to test
-        if eb_db.shape[0] != 0 and eb_db.iloc[0]['score'] < self.db['eb_thresh']:
-            knowledge_str = eb_db.iloc[0]['word']
-            return self.get_knowledge(knowledge_str)
-        elif newbie_db.shape[0] != 0 and newbie_db.iloc[0]['score'] < self.db['newbie_thresh']:
-            knowledge_str = newbie_db.iloc[0]['word']
-            return self.get_knowledge(knowledge_str)
-        else:
-            new_word_id = self.db['new_words'][0]  # get_knowledge will pop it
-            knowledge_str = self.knowledge.at[new_word_id, 'word']
-            return self.get_knowledge(knowledge_str)
+        knowledge_str = None
+        if review_mode == 'Normal':
+            # First priority review EB
+            # Second priority get Newbie into EB
+            # Third priority get new words into Newbie
+            if eb_db.shape[0] != 0 and eb_db.iloc[0]['score'] < self.db['eb_thresh']:
+                knowledge_str = eb_db.iloc[0]['word']
+            elif newbie_db.shape[0] != 0 and newbie_db.iloc[0]['score'] < self.db['newbie_thresh']:
+                knowledge_str = newbie_db.iloc[0]['word']
+            else:
+                new_word_id = self.db['new_words'][0]  # get_knowledge will pop it
+                knowledge_str = self.knowledge.at[new_word_id, 'word']
+        elif review_mode == 'Eb Table Only':
+            if eb_db.shape[0] != 0:
+                knowledge_str = eb_db.iloc[0]['word']
+            else:
+                print('Nothing left in Eb Table! Used normal mode instead.')
+                return self.get_next_quiz('Normal')
+        elif review_mode == 'Newbie Table Only':
+            if newbie_db.shape[0] != 0:
+                knowledge_str = newbie_db.iloc[0]['word']
+            else:
+                print('Nothing left in Eb Table! Used normal mode instead.')
+                return self.get_next_quiz('Normal')
+        elif review_mode == 'Starred':
+            starred = eb_db[eb_db['star'] == True]
+            if starred.shape[0] != 0:
+                knowledge_str = starred.iloc[0]['word']
+            else:
+                print('Nothing left in Eb Table! Used normal mode instead.')
+                return self.get_next_quiz('Normal')
+        elif review_mode == 'Triangled':
+            triangled = eb_db[eb_db['triangle'] == True]
+            if triangled.shape[0] != 0:
+                knowledge_str = triangled.iloc[0]['word']
+            else:
+                print('Nothing left in Eb Table! Used normal mode instead.')
+                return self.get_next_quiz('Normal')
+
+        assert knowledge_str is not None
+        return self.get_knowledge(knowledge_str)
 
     def get_knowledge(self, knowledge_str):
         """ Find knowledge_str, and return tuple of info presenting at frontend """
@@ -192,7 +220,7 @@ class FightMem:
         assert isinstance(self.current_id, numbers.Integral)
         stat += '            Remaining: ' + str(len(self.db['new_words']))
         return entry['word'], entry['pron'], entry['mean'], entry['syn'], entry['ex'], \
-            entry['note'], star, triangle, stat
+            entry['note'], bool(star), bool(triangle), stat  # Cast np.bool_ star and triangle to Python
 
     def eb_update_model(self, eb_df, correct, star, triangle):
         item_index = eb_df[eb_df['id'] == self.current_id].index[0]

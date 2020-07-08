@@ -187,7 +187,7 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.backend.set_quiz_result(result, self.t_note.toPlainText(), self.star, self.triangle)
         # Get next info from backend
         self.word, self.pron, self.mean, self.syn, self.ex, \
-            self.note, self.star, self.triangle, self.stat = self.backend.get_next_quiz()
+            self.note, self.star, self.triangle, self.stat = self.backend.get_next_quiz(self.e_mode.currentText())
         self.toggle_answer(force_to=True)
 
 
