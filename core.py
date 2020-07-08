@@ -39,6 +39,7 @@ class FightMem:
             }
 
         self.current_id = None
+        self.void = set()  # Stores entries popped out of new_words set but not added to Newbie
 
     def get_eb_df(self):
         df_display = self.db['eb_data'].copy()
@@ -130,46 +131,68 @@ class FightMem:
         # Second priority get Newbie into EB
         # Third priority get new words into Newbie
         eb_db = self.db['eb_data']
-        new_db = self.db['newbie_data']
+        newbie_db = self.db['newbie_data']
         # TODO: Refactor to which entry to test
         if eb_db.shape[0] != 0 and eb_db.iloc[0]['score'] < self.db['eb_thresh']:
-            self.current_id = eb_db.iloc[0]['id']
-            entry = self.knowledge.loc[self.current_id]
-            star = eb_db.iloc[0]['star']
-            triangle = eb_db.iloc[0]['triangle']
-            stat += '[Eb]     Correct ' + str(eb_db.iloc[0]['correct']) + '/' \
-                    + str(eb_db.iloc[0]['total']) + ' = ' + \
-                    str(round(eb_db.iloc[0]['correct'] * 100 / eb_db.iloc[0]['total'], 2)) + '%\n'
-        elif new_db.shape[0] != 0 and new_db.iloc[0]['score'] < self.db['newbie_thresh']:
-            self.current_id = new_db.iloc[0]['id']
-            entry = self.knowledge.loc[self.current_id]
-            star = new_db.iloc[0]['star']
-            triangle = new_db.iloc[0]['triangle']
-            stat += '[Newbie] Correct ' + str(new_db.iloc[0]['correct']) + '/' \
-                    + str(new_db.iloc[0]['total']) + ' = ' + \
-                    str(round(new_db.iloc[0]['correct'] * 100 / new_db.iloc[0]['total'], 2)) + '%\n'
+            knowledge_str = eb_db.iloc[0]['word']
+            return self.get_knowledge(knowledge_str)
+        elif newbie_db.shape[0] != 0 and newbie_db.iloc[0]['score'] < self.db['newbie_thresh']:
+            knowledge_str = newbie_db.iloc[0]['word']
+            return self.get_knowledge(knowledge_str)
         else:
-            new_word_id = self.db['new_words'].pop()
-            entry = self.knowledge.loc[new_word_id]
+            new_word_id = self.db['new_words'][0]  # get_knowledge will pop it
+            knowledge_str = self.knowledge.at[new_word_id, 'word']
+            return self.get_knowledge(knowledge_str)
+
+    def get_knowledge(self, knowledge_str):
+        """ Find knowledge_str, and return tuple of info presenting at frontend """
+        stat = ''
+        eb_db = self.db['eb_data']
+        newbie_db = self.db['newbie_data']
+        # Search in Eb
+        if (eb_db['word'] == knowledge_str).any():
+            entry_index = eb_db[eb_db['word'] == knowledge_str].index[0]
+            self.current_id = eb_db.loc[entry_index, 'id']
+            star = eb_db.loc[entry_index, 'star']
+            triangle = eb_db.loc[entry_index, 'triangle']
+            entry = self.knowledge.loc[self.current_id]
+            stat += '[Eb]     Correct ' + str(eb_db.loc[entry_index, 'correct']) + '/' \
+                    + str(eb_db.loc[entry_index, 'total']) + ' = ' \
+                    + str(round(eb_db.loc[entry_index, 'correct'] * 100 / eb_db.loc[entry_index, 'total'], 2)) + '%\n'
+        # Search in Newbie
+        elif (newbie_db['word'] == knowledge_str).any():
+            entry_index = newbie_db[newbie_db['word'] == knowledge_str].index[0]
+            self.current_id = newbie_db.loc[entry_index, 'id']
+            star = newbie_db.loc[entry_index, 'star']
+            triangle = newbie_db.loc[entry_index, 'triangle']
+            entry = self.knowledge.loc[self.current_id]
+            stat += '[Newbie] Correct ' + str(newbie_db.loc[entry_index, 'correct']) + '/' \
+                    + str(newbie_db.loc[entry_index, 'total']) + ' = ' \
+                    + str(round(newbie_db.loc[entry_index, 'correct'] * 100 / newbie_db.loc[entry_index, 'total'], 2)) \
+                    + '%\n'
+        # Should be in new_words or trash
+        else:
+            word_id = self.knowledge[self.knowledge['word'] == knowledge_str].index[0]
+            if word_id in self.db['new_words']:
+                # Remove selected word from new_words list
+                # Note: DB not saved until user answer this quiz -- so if user quits now this action will not be saved
+                self.db['new_words'] = self.db['new_words'].union(self.void)
+                self.void = set()
+                self.db['new_words'].remove(word_id)
+                self.void.add(word_id)
+                stat += 'New Knowledge\t'
+            else:
+                stat += 'Trashed\t'
+            entry = self.knowledge.loc[word_id]
             star = False
             triangle = False
-            self.current_id = new_word_id
-            stat += 'New Knowledge\t'
+            self.current_id = word_id
 
+        # Sanity check
         assert isinstance(self.current_id, numbers.Integral)
         stat += '            Remaining: ' + str(len(self.db['new_words']))
         return entry['word'], entry['pron'], entry['mean'], entry['syn'], entry['ex'], \
             entry['note'], star, triangle, stat
-
-    def get_knowledge(self, knowledge_str):
-        """ High level API to get a specific knowledge """
-        # TODO: Refactor to have same API with get_next
-        entry = self.knowledge[self.knowledge['word'] == knowledge_str].iloc[0]
-        self.current_id = entry.name
-        stat = ''
-        stat += '            Remaining: ' + str(len(self.db['new_words']))
-        return entry['word'], entry['pron'], entry['mean'], entry['syn'], entry['ex'],\
-            entry['note'], entry['star'], entry['triangle'], stat
 
     def eb_update_model(self, eb_df, correct, star, triangle):
         item_index = eb_df[eb_df['id'] == self.current_id].index[0]
@@ -193,6 +216,8 @@ class FightMem:
         assert isinstance(triangle, bool)
         if result != 'init':
             self.knowledge.loc[self.current_id, 'note'] = note_updated
+            if self.current_id in self.void:
+                self.void.remove(self.current_id)
 
             eb_df = self.db['eb_data']
             newbie_df = self.db['newbie_data']
@@ -244,6 +269,7 @@ class FightMem:
             self.save()
 
     def save(self):
+        self.db['new_words'] = self.db['new_words'].union(self.void)
         pickle.dump(self.knowledge, open(self.knowledge_path, 'wb'))
         pickle.dump(self.db, open(self.db_path, 'wb'))
 

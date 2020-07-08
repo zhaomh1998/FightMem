@@ -31,6 +31,7 @@ python main.py
 - [x] Trash can Page
 - [x] Explore / Table Review Mode (especially adjacent knowledge)
 - [ ] Eb / Newbie / Star / Triangle only quiz-mode
+- [ ] TableView hide solution button
 - [ ] ToNewbie table button (to start over)
 - [ ] Different way to present multiple new knowledge entry (table?)
 - [ ] Word count more details (today, past week, ...)
