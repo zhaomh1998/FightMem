@@ -41,37 +41,89 @@ class FightMem:
         self.current_id = None
         self.void = set()  # Stores entries popped out of new_words set but not added to Newbie
 
-    def get_eb_df(self):
-        df_display = self.db['eb_data'].copy()
-        df_display['HourPassed'] = df_display['t_last'].apply(
+    def get_eb_df(self, hide_sln=False):
+        df_out = self.db['eb_data'].copy()
+        df_out['HourPassed'] = df_out['t_last'].apply(
             lambda x: round(_time_diff_to_hr(datetime.now(), x), 2)
         )
-        df_display['Model_A'] = df_display['model'].apply(lambda x: round(x[0], 2))
-        df_display['Model_B'] = df_display['model'].apply(lambda x: round(x[1], 2))
-        df_display['Model_T'] = df_display['model'].apply(lambda x: round(x[2], 2))
-        return df_display[['word', 'score', 'HourPassed', 'Model_A', 'Model_B', 'Model_T']]
+        df_out['Model_A'] = df_out['model'].apply(lambda x: round(x[0], 2))
+        df_out['Model_B'] = df_out['model'].apply(lambda x: round(x[1], 2))
+        df_out['Model_T'] = df_out['model'].apply(lambda x: round(x[2], 2))
+        df_out = df_out.merge(self.knowledge, how='inner', on='word')
+        # Extract out Chinese characters for meaning
+        df_out['mean'] = df_out['mean'].apply(lambda x: ' '.join(re.findall(r'([\u4e00-\u9fa5]+)', x)))
+        if hide_sln:
+            return df_out[['word', 'score', 'HourPassed', 'Model_T', 'Model_A', 'Model_B']]
+        else:
+            return df_out[['word', 'score', 'mean', 'syn', 'HourPassed', 'Model_T', 'Model_A', 'Model_B', ]]
 
-    def get_newbie_df(self):
-        df_display = self.db['newbie_data'].copy()
-        df_display['MinPassed'] = df_display['t_last'].apply(
+    def get_newbie_df(self, hide_sln=False):
+        df_out = self.db['newbie_data'].copy()
+        df_out['MinPassed'] = df_out['t_last'].apply(
             lambda x: round(_time_diff_to_hr(datetime.now(), x) * 60, 2)
         )
-        return df_display[['word', 'score', 'MinPassed', 'correct']]
+        df_out = df_out.merge(self.knowledge, how='inner', on='word')
+        # Extract out Chinese characters for meaning
+        df_out['mean'] = df_out['mean'].apply(lambda x: ' '.join(re.findall(r'([\u4e00-\u9fa5]+)', x)))
+        if hide_sln:
+            return df_out[['word', 'score', 'MinPassed', 'correct']]
+        else:
+            return df_out[['word', 'score', 'mean', 'syn', 'MinPassed', 'correct']]
 
-    def get_trash_df(self):
+    def get_trash_df(self, hide_sln=False):
         old_words = self.knowledge.index.difference(self.knowledge.loc[self.db['new_words']].index)
         learning_words = pd.Index(self.db['eb_data']['id'].to_numpy()).union(self.db['newbie_data']['id'].to_numpy())
         df_out = self.knowledge.loc[old_words.difference(learning_words)].copy()
         df_out['id'] = df_out.index
         # Extract out Chinese characters for meaning
         df_out['mean'] = df_out['mean'].apply(lambda x: ' '.join(re.findall(r'([\u4e00-\u9fa5]+)', x)))
-        return df_out.reset_index(drop=True)[['word', 'pron', 'mean', 'syn', 'id']]
+        if hide_sln:
+            return df_out.reset_index(drop=True)[['word', 'pron', 'id']]
+        else:
+            return df_out.reset_index(drop=True)[['word', 'pron', 'mean', 'syn', 'id']]
 
-    def get_knowledge_df(self):
+    def get_knowledge_df(self, hide_sln=False):
         df_out = self.knowledge.copy()
         # Extract out Chinese characters for meaning
         df_out['mean'] = df_out['mean'].apply(lambda x: ' '.join(re.findall(r'([\u4e00-\u9fa5]+)', x)))
-        return df_out[['word', 'pron', 'mean', 'syn', 'ex']]
+        if hide_sln:
+            return df_out[['word', 'pron']]
+        else:
+            return df_out[['word', 'pron', 'mean', 'syn', 'ex']]
+
+    def get_star_df(self, hide_sln=False):
+        eb_db = self.db['eb_data']
+        df_out = eb_db[eb_db['star'] == True].copy()
+        df_out['HourPassed'] = df_out['t_last'].apply(
+            lambda x: round(_time_diff_to_hr(datetime.now(), x), 2)
+        )
+        df_out['Model_A'] = df_out['model'].apply(lambda x: round(x[0], 2))
+        df_out['Model_B'] = df_out['model'].apply(lambda x: round(x[1], 2))
+        df_out['Model_T'] = df_out['model'].apply(lambda x: round(x[2], 2))
+        df_out = df_out.merge(self.knowledge, how='inner', on='word')
+        # Extract out Chinese characters for meaning
+        df_out['mean'] = df_out['mean'].apply(lambda x: ' '.join(re.findall(r'([\u4e00-\u9fa5]+)', x)))
+        if hide_sln:
+            return df_out[['word', 'score', 'HourPassed', 'Model_T', 'Model_A', 'Model_B']]
+        else:
+            return df_out[['word', 'score', 'mean', 'syn', 'HourPassed', 'Model_T', 'Model_A', 'Model_B', ]]
+
+    def get_triangle_df(self, hide_sln=False):
+        eb_db = self.db['eb_data']
+        df_out = eb_db[eb_db['triangle'] == True].copy()
+        df_out['HourPassed'] = df_out['t_last'].apply(
+            lambda x: round(_time_diff_to_hr(datetime.now(), x), 2)
+        )
+        df_out['Model_A'] = df_out['model'].apply(lambda x: round(x[0], 2))
+        df_out['Model_B'] = df_out['model'].apply(lambda x: round(x[1], 2))
+        df_out['Model_T'] = df_out['model'].apply(lambda x: round(x[2], 2))
+        df_out = df_out.merge(self.knowledge, how='inner', on='word')
+        # Extract out Chinese characters for meaning
+        df_out['mean'] = df_out['mean'].apply(lambda x: ' '.join(re.findall(r'([\u4e00-\u9fa5]+)', x)))
+        if hide_sln:
+            return df_out[['word', 'score', 'HourPassed', 'Model_T', 'Model_A', 'Model_B']]
+        else:
+            return df_out[['word', 'score', 'mean', 'syn', 'HourPassed', 'Model_T', 'Model_A', 'Model_B', ]]
 
     def get_setting(self):
         version = self.db['db_version']
@@ -220,7 +272,7 @@ class FightMem:
         assert isinstance(self.current_id, numbers.Integral)
         stat += '            Remaining: ' + str(len(self.db['new_words']))
         return entry['word'], entry['pron'], entry['mean'], entry['syn'], entry['ex'], \
-            entry['note'], bool(star), bool(triangle), stat  # Cast np.bool_ star and triangle to Python
+               entry['note'], bool(star), bool(triangle), stat  # Cast np.bool_ star and triangle to Python
 
     def eb_update_model(self, eb_df, correct, star, triangle):
         item_index = eb_df[eb_df['id'] == self.current_id].index[0]

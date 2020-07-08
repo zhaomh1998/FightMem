@@ -453,7 +453,18 @@ p, li { white-space: pre-wrap; }
        </attribute>
        <layout class="QGridLayout" name="gridLayout_3">
         <item row="0" column="0">
-         <widget class="QTableView" name="t_table_eb"/>
+         <layout class="QVBoxLayout" name="verticalLayout_6">
+          <item>
+           <widget class="QCheckBox" name="b_hide_eb">
+            <property name="text">
+             <string>Hide Solution</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QTableView" name="t_table_eb"/>
+          </item>
+         </layout>
         </item>
        </layout>
       </widget>
@@ -463,7 +474,18 @@ p, li { white-space: pre-wrap; }
        </attribute>
        <layout class="QGridLayout" name="gridLayout_4">
         <item row="0" column="0">
-         <widget class="QTableView" name="t_table_new"/>
+         <layout class="QVBoxLayout" name="verticalLayout_7">
+          <item>
+           <widget class="QCheckBox" name="b_hide_new">
+            <property name="text">
+             <string>Hide Solution</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QTableView" name="t_table_new"/>
+          </item>
+         </layout>
         </item>
        </layout>
       </widget>
@@ -475,9 +497,9 @@ p, li { white-space: pre-wrap; }
         <item row="0" column="0">
          <layout class="QVBoxLayout" name="verticalLayout_5">
           <item>
-           <widget class="QCheckBox" name="b_recover">
+           <widget class="QCheckBox" name="b_hide_trash">
             <property name="text">
-             <string>Double click to recover</string>
+             <string>Hide Solution</string>
             </property>
            </widget>
           </item>
@@ -494,7 +516,60 @@ p, li { white-space: pre-wrap; }
        </attribute>
        <layout class="QGridLayout" name="gridLayout_6">
         <item row="0" column="0">
-         <widget class="QTableView" name="t_table_explore"/>
+         <layout class="QVBoxLayout" name="verticalLayout_8">
+          <item>
+           <widget class="QCheckBox" name="b_hide_explore">
+            <property name="text">
+             <string>Hide Solution</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QTableView" name="t_table_explore"/>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tab">
+       <attribute name="title">
+        <string>★</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_7">
+        <item row="0" column="0">
+         <layout class="QVBoxLayout" name="verticalLayout_9">
+          <item>
+           <widget class="QCheckBox" name="b_hide_star">
+            <property name="text">
+             <string>Hide Solution</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QTableView" name="t_table_star"/>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tab_2">
+       <attribute name="title">
+        <string>▲</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_8">
+        <item row="0" column="0">
+         <layout class="QVBoxLayout" name="verticalLayout_10">
+          <item>
+           <widget class="QCheckBox" name="b_hide_triangle">
+            <property name="text">
+             <string>Hide Solution</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QTableView" name="t_table_triangle"/>
+          </item>
+         </layout>
         </item>
        </layout>
       </widget>
@@ -507,7 +582,7 @@ p, li { white-space: pre-wrap; }
          <rect>
           <x>10</x>
           <y>10</y>
-          <width>231</width>
+          <width>267</width>
           <height>160</height>
          </rect>
         </property>

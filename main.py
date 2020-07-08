@@ -96,6 +96,10 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.b_triangle.mousePressEvent = self.triangle_cb
         self.b_star.mousePressEvent = self.star_cb
 
+        for hide_button in [self.b_hide_eb, self.b_hide_new, self.b_hide_trash, self.b_hide_explore,
+                            self.b_hide_star, self.b_hide_triangle]:
+            hide_button.stateChanged.connect(lambda x: self.page_changed(self.tabWidget.currentIndex()))
+
     def triangle_cb(self, event):
         self.triangle = not self.triangle
         self.refresh_ui()
@@ -147,19 +151,25 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def page_changed(self, change):
         if change == 1:  # Table page
             self.backend.refresh_db_prediction()
-            model = DataFrameModel(self.backend.get_eb_df())
+            model = DataFrameModel(self.backend.get_eb_df(self.b_hide_eb.checkState()))
             self.t_table_eb.setModel(model)
         elif change == 2:
             self.backend.refresh_db_prediction()
-            model = DataFrameModel(self.backend.get_newbie_df())
+            model = DataFrameModel(self.backend.get_newbie_df(self.b_hide_new.checkState()))
             self.t_table_new.setModel(model)
         elif change == 3:
-            model = DataFrameModel(self.backend.get_trash_df())
+            model = DataFrameModel(self.backend.get_trash_df(self.b_hide_trash.checkState()))
             self.t_table_trash.setModel(model)
         elif change == 4:
-            model = DataFrameModel(self.backend.get_knowledge_df())
+            model = DataFrameModel(self.backend.get_knowledge_df(self.b_hide_explore.checkState()))
             self.t_table_explore.setModel(model)
         elif change == 5:
+            model = DataFrameModel(self.backend.get_star_df(self.b_hide_star.checkState()))
+            self.t_table_star.setModel(model)
+        elif change == 6:
+            model = DataFrameModel(self.backend.get_triangle_df(self.b_hide_triangle.checkState()))
+            self.t_table_triangle.setModel(model)
+        elif change == 7:
             version_str, eb_thresh, newbie_thresh, newbie2eb_thresh = self.backend.get_setting()
             self.t_version.setText(version_str)
             self.e_eb_thresh.setValue(eb_thresh)
