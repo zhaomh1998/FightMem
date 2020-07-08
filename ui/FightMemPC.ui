@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>793</width>
-    <height>813</height>
+    <height>904</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,9 +18,9 @@
     <item row="0" column="0">
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>5</number>
       </property>
-      <widget class="QWidget" name="tab">
+      <widget class="QWidget" name="tab_learn">
        <attribute name="title">
         <string>Learn</string>
        </attribute>
@@ -147,6 +147,61 @@
              </size>
             </property>
            </spacer>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_8">
+            <item>
+             <spacer name="horizontalSpacer_7">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QLabel" name="b_triangle">
+              <property name="maximumSize">
+               <size>
+                <width>60</width>
+                <height>60</height>
+               </size>
+              </property>
+              <property name="cursor">
+               <cursorShape>PointingHandCursor</cursorShape>
+              </property>
+              <property name="pixmap">
+               <pixmap>triangle_empty.png</pixmap>
+              </property>
+              <property name="scaledContents">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="b_star">
+              <property name="maximumSize">
+               <size>
+                <width>60</width>
+                <height>60</height>
+               </size>
+              </property>
+              <property name="cursor">
+               <cursorShape>PointingHandCursor</cursorShape>
+              </property>
+              <property name="pixmap">
+               <pixmap>star_empty.png</pixmap>
+              </property>
+              <property name="scaledContents">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </item>
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -392,7 +447,7 @@ p, li { white-space: pre-wrap; }
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="tab_2">
+      <widget class="QWidget" name="tab_eb">
        <attribute name="title">
         <string>Ebbinghaus Table</string>
        </attribute>
@@ -402,7 +457,7 @@ p, li { white-space: pre-wrap; }
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="tab_3">
+      <widget class="QWidget" name="tab_newbie">
        <attribute name="title">
         <string>Newbie Table</string>
        </attribute>
@@ -412,17 +467,48 @@ p, li { white-space: pre-wrap; }
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="tab_4">
+      <widget class="QWidget" name="tab_trashed">
+       <attribute name="title">
+        <string>Trashed</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_5">
+        <item row="0" column="0">
+         <layout class="QVBoxLayout" name="verticalLayout_5">
+          <item>
+           <widget class="QCheckBox" name="b_recover">
+            <property name="text">
+             <string>Double click to recover</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QTableView" name="t_table_trash"/>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tab_explore">
+       <attribute name="title">
+        <string>Explore</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_6">
+        <item row="0" column="0">
+         <widget class="QTableView" name="t_table_explore"/>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tab_setting">
        <attribute name="title">
         <string>Setting</string>
        </attribute>
-       <widget class="QWidget" name="">
+       <widget class="QWidget" name="layoutWidget">
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>0</y>
-          <width>217</width>
-          <height>124</height>
+          <y>10</y>
+          <width>231</width>
+          <height>160</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -495,6 +581,46 @@ p, li { white-space: pre-wrap; }
              <property name="minimum">
               <number>1</number>
              </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_6">
+           <item>
+            <widget class="QLabel" name="label_4">
+             <property name="text">
+              <string>Learning Mode</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QComboBox" name="e_mode">
+             <item>
+              <property name="text">
+               <string>Normal</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Eb Table Only</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Newbie Table Only</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Starred</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Triangled</string>
+              </property>
+             </item>
             </widget>
            </item>
           </layout>

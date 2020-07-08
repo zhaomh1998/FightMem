@@ -1,5 +1,6 @@
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import QShortcut
+from PyQt5.QtCore import QFileInfo
 from ui.FightMemPCUI import *
 import core
 from ui.DataFrameView import DataFrameModel
@@ -21,6 +22,8 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.note = 'Knowledge file load error'
         self.stat = None
         self.answer_hidden = True
+        self.triangle = False
+        self.star = False
 
         self.refresh_ui()
         self.setup_callback()
@@ -52,6 +55,16 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         else:
             assert isinstance(self.stat, str)
             self.t_stat.setText(self.stat)
+
+        if self.star:
+            self.b_star.setPixmap(QtGui.QPixmap('ui/star_filled.png'))
+        else:
+            self.b_star.setPixmap(QtGui.QPixmap('ui/star_empty.png'))
+        if self.triangle:
+            self.b_triangle.setPixmap(QtGui.QPixmap('ui/triangle_filled.png'))
+        else:
+            self.b_triangle.setPixmap(QtGui.QPixmap('ui/triangle_empty.png'))
+
         self.repaint()
 
     def setup_callback(self):
@@ -78,10 +91,22 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.t_table_eb.doubleClicked.connect(self.query_knowledge)
         self.t_table_new.doubleClicked.connect(self.query_knowledge)
 
+        self.b_triangle.mousePressEvent = self.triangle_cb
+        self.b_star.mousePressEvent = self.star_cb
+
+    def triangle_cb(self, event):
+        self.triangle = not self.triangle
+        self.refresh_ui()
+
+    def star_cb(self, event):
+        self.star = not self.star
+        self.refresh_ui()
+
     def query_knowledge(self, item):
         if item.column() == 0:
-            self.word, self.pron, self.mean, self.syn, self.ex, self.note, self.stat = \
-                self.backend.get_knowledge(item.data())
+            # TODO: Refactor to have get_knowledge and get_next coming from same query API
+            self.word, self.pron, self.mean, self.syn, self.ex,\
+                self.note, self.star, self.triangle, self.stat = self.backend.get_knowledge(item.data())
             self.tabWidget.setCurrentIndex(0)
             self.toggle_answer(force_to=False)
 
@@ -120,13 +145,19 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def page_changed(self, change):
         if change == 1:  # Table page
             self.backend.refresh_db_prediction()
-            model = DataFrameModel(self.backend.get_eb())
+            model = DataFrameModel(self.backend.get_eb_df())
             self.t_table_eb.setModel(model)
         elif change == 2:
             self.backend.refresh_db_prediction()
-            model = DataFrameModel(self.backend.get_new())
+            model = DataFrameModel(self.backend.get_newbie_df())
             self.t_table_new.setModel(model)
         elif change == 3:
+            model = DataFrameModel(self.backend.get_trash_df())
+            self.t_table_trash.setModel(model)
+        elif change == 4:
+            model = DataFrameModel(self.backend.get_knowledge_df())
+            self.t_table_explore.setModel(model)
+        elif change == 5:
             version_str, eb_thresh, newbie_thresh, newbie2eb_thresh = self.backend.get_setting()
             self.t_version.setText(version_str)
             self.e_eb_thresh.setValue(eb_thresh)
@@ -151,9 +182,10 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def next_word(self, result):
         # Post current result to backend
-        self.backend.set_quiz_result(result, self.t_note.toPlainText())
+        self.backend.set_quiz_result(result, self.t_note.toPlainText(), self.star, self.triangle)
         # Get next info from backend
-        self.word, self.pron, self.mean, self.syn, self.ex, self.note, self.stat = self.backend.get_next_quiz()
+        self.word, self.pron, self.mean, self.syn, self.ex, \
+            self.note, self.star, self.triangle, self.stat = self.backend.get_next_quiz()
         self.toggle_answer(force_to=True)
 
 

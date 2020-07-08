@@ -26,20 +26,15 @@ python main.py
 ## Todo List
 - [x] Function Key with left click Yes, right click No
 - [x] User configurable parameters
-
-### Minor
-- [ ] Customized mark for entries to be displayed before solution
-- [ ] Ordered mode (order by ID instead of score)
+- [x] Customized mark for entries to be displayed before solution
+- [x] Auto backup database at startup
+- [x] Trash can Page
+- [x] Explore / Table Review Mode (especially adjacent knowledge)
+- [ ] Eb / Newbie / Star / Triangle only quiz-mode
+- [ ] ToNewbie table button (to start over)
 - [ ] Different way to present multiple new knowledge entry (table?)
 - [ ] Word count more details (today, past week, ...)
-- [ ] Eb / Newbie only quiz-mode
-- [x] Auto backup database at startup
 - [ ] Undo last action
-- [ ] Trash can Page
-- [ ] Explore / Table Review Mode (especially adjacent knowledge)
-- [ ] ToNewbie table button (to start over)
-
-### Beta 1.2
 - [ ] No more quiz today for a word
 - [ ] Too much consecutive No should downgrade Eb to Newbie
 - [ ] Search functionality for each table

@@ -2,6 +2,7 @@ import pickle
 import os
 import numbers
 import shutil
+import re
 import pandas as pd
 from datetime import datetime, timedelta
 import ebisu
@@ -39,7 +40,7 @@ class FightMem:
 
         self.current_id = None
 
-    def get_eb(self):
+    def get_eb_df(self):
         df_display = self.db['eb_data'].copy()
         df_display['HourPassed'] = df_display['t_last'].apply(
             lambda x: round(_time_diff_to_hr(datetime.now(), x), 2)
@@ -49,12 +50,27 @@ class FightMem:
         df_display['Model_T'] = df_display['model'].apply(lambda x: round(x[2], 2))
         return df_display[['word', 'score', 'HourPassed', 'Model_A', 'Model_B', 'Model_T']]
 
-    def get_new(self):
+    def get_newbie_df(self):
         df_display = self.db['newbie_data'].copy()
         df_display['MinPassed'] = df_display['t_last'].apply(
             lambda x: round(_time_diff_to_hr(datetime.now(), x) * 60, 2)
         )
         return df_display[['word', 'score', 'MinPassed', 'correct']]
+
+    def get_trash_df(self):
+        old_words = self.knowledge.index.difference(self.knowledge.loc[self.db['new_words']].index)
+        learning_words = pd.Index(self.db['eb_data']['id'].to_numpy()).union(self.db['newbie_data']['id'].to_numpy())
+        df_out = self.knowledge.loc[old_words.difference(learning_words)].copy()
+        df_out['id'] = df_out.index
+        # Extract out Chinese characters for meaning
+        df_out['mean'] = df_out['mean'].apply(lambda x: ' '.join(re.findall(r'([\u4e00-\u9fa5]+)', x)))
+        return df_out.reset_index(drop=True)[['word', 'pron', 'mean', 'syn', 'id']]
+
+    def get_knowledge_df(self):
+        df_out = self.knowledge.copy()
+        # Extract out Chinese characters for meaning
+        df_out['mean'] = df_out['mean'].apply(lambda x: ' '.join(re.findall(r'([\u4e00-\u9fa5]+)', x)))
+        return df_out[['word', 'pron', 'mean', 'syn', 'ex']]
 
     def get_setting(self):
         version = self.db['db_version']
@@ -89,7 +105,7 @@ class FightMem:
         ), 4)
         return entry
 
-    def new_entry(self, db_name, entry_id, total=0, correct=0, start_model=EB_MODEL):
+    def new_entry(self, db_name, entry_id, total=0, correct=0, start_model=EB_MODEL, star=False, triangle=False):
         # db_name: eb_data or newbie_data
         assert isinstance(db_name, str)
         assert db_name in self.db.keys()
@@ -101,7 +117,9 @@ class FightMem:
             'total': total,
             'correct': correct,
             't_last': datetime.now(),
-            'score': 1
+            'score': 1,
+            'star': star,
+            'triangle': triangle
         }, ignore_index=True)
 
     def get_next_quiz(self):
@@ -117,37 +135,46 @@ class FightMem:
         if eb_db.shape[0] != 0 and eb_db.iloc[0]['score'] < self.db['eb_thresh']:
             self.current_id = eb_db.iloc[0]['id']
             entry = self.knowledge.loc[self.current_id]
+            star = eb_db.iloc[0]['star']
+            triangle = eb_db.iloc[0]['triangle']
             stat += '[Eb]     Correct ' + str(eb_db.iloc[0]['correct']) + '/' \
                     + str(eb_db.iloc[0]['total']) + ' = ' + \
                     str(round(eb_db.iloc[0]['correct'] * 100 / eb_db.iloc[0]['total'], 2)) + '%\n'
         elif new_db.shape[0] != 0 and new_db.iloc[0]['score'] < self.db['newbie_thresh']:
             self.current_id = new_db.iloc[0]['id']
             entry = self.knowledge.loc[self.current_id]
+            star = new_db.iloc[0]['star']
+            triangle = new_db.iloc[0]['triangle']
             stat += '[Newbie] Correct ' + str(new_db.iloc[0]['correct']) + '/' \
                     + str(new_db.iloc[0]['total']) + ' = ' + \
                     str(round(new_db.iloc[0]['correct'] * 100 / new_db.iloc[0]['total'], 2)) + '%\n'
         else:
             new_word_id = self.db['new_words'].pop()
             entry = self.knowledge.loc[new_word_id]
+            star = False
+            triangle = False
             self.current_id = new_word_id
             stat += 'New Knowledge\t'
 
         assert isinstance(self.current_id, numbers.Integral)
         stat += '            Remaining: ' + str(len(self.db['new_words']))
-        return entry['word'], entry['pron'], entry['mean'], entry['syn'], entry['ex'], entry['note'], stat
+        return entry['word'], entry['pron'], entry['mean'], entry['syn'], entry['ex'], \
+            entry['note'], star, triangle, stat
 
     def get_knowledge(self, knowledge_str):
         """ High level API to get a specific knowledge """
+        # TODO: Refactor to have same API with get_next
         entry = self.knowledge[self.knowledge['word'] == knowledge_str].iloc[0]
         self.current_id = entry.name
         stat = ''
         stat += '            Remaining: ' + str(len(self.db['new_words']))
-        return entry['word'], entry['pron'], entry['mean'], entry['syn'], entry['ex'], entry['note'], stat
+        return entry['word'], entry['pron'], entry['mean'], entry['syn'], entry['ex'],\
+            entry['note'], entry['star'], entry['triangle'], stat
 
-    def eb_update_model(self, eb_df, correct):
+    def eb_update_model(self, eb_df, correct, star, triangle):
         item_index = eb_df[eb_df['id'] == self.current_id].index[0]
-        eb_df.loc[item_index, 'total'] += 1
-        eb_df.loc[item_index, 'correct'] += 1 if correct else 0
+        eb_df.at[item_index, 'total'] += 1
+        eb_df.at[item_index, 'correct'] += 1 if correct else 0
         new_model = ebisu.updateRecall(
             prior=eb_df.loc[item_index, 'model'],
             successes=eb_df.loc[item_index, 'correct'],
@@ -155,11 +182,15 @@ class FightMem:
             tnow=_time_diff_to_hr(eb_df.loc[item_index, 't_last'], datetime.now())
         )
         eb_df.at[item_index, 'model'] = new_model  # Note: loc can't assign tuple to a cell
-        eb_df.loc[item_index, 't_last'] = datetime.now()
+        eb_df.at[item_index, 't_last'] = datetime.now()
+        eb_df.at[item_index, 'star'] = star
+        eb_df.at[item_index, 'triangle'] = triangle
 
-    def set_quiz_result(self, result, note_updated):
+    def set_quiz_result(self, result, note_updated, star, triangle):
         """ High level API to set quiz result """
         assert result in ['yes', 'no', 'to_eb', 'trash', 'init']
+        assert isinstance(star, bool)
+        assert isinstance(triangle, bool)
         if result != 'init':
             self.knowledge.loc[self.current_id, 'note'] = note_updated
 
@@ -167,9 +198,9 @@ class FightMem:
             newbie_df = self.db['newbie_data']
             if (eb_df['id'] == self.current_id).any():  # Word in EB Database
                 if result == 'yes':
-                    self.eb_update_model(eb_df, correct=True)
+                    self.eb_update_model(eb_df, correct=True, star=star, triangle=triangle)
                 elif result == 'no':
-                    self.eb_update_model(eb_df, correct=False)
+                    self.eb_update_model(eb_df, correct=False, star=star, triangle=triangle)
                 elif result == 'to_eb':
                     # No action taken -- Already in eb
                     # TODO: Make it ToNew instead
@@ -181,14 +212,14 @@ class FightMem:
             elif (newbie_df['id'] == self.current_id).any():  # Word in Newbie Database
                 entry_index = newbie_df[newbie_df['id'] == self.current_id].index
                 if result == 'yes':
-                    self.eb_update_model(newbie_df, correct=True)
+                    self.eb_update_model(newbie_df, correct=True, star=star, triangle=triangle)
                     correct = newbie_df.at[entry_index[0], 'correct']
                     # Add to EB Database if correct more than <_NEW_WORD_TO_DB_THRESHOLD> times
                     if correct > self.db['newbie2eb_thresh']:
                         newbie_df.drop(entry_index, inplace=True)
                         self.new_entry('eb_data', self.current_id, total=1, correct=1)
                 elif result == 'no':
-                    self.eb_update_model(newbie_df, correct=False)
+                    self.eb_update_model(newbie_df, correct=False, star=star, triangle=triangle)
                     correct = newbie_df.at[entry_index[0], 'correct']
                     # Punish as wrong answer provided: correct - 1
                     if correct > 0:
@@ -233,10 +264,16 @@ def _load_update_db(path):
             db['newbie2eb_thresh'] = NEWBIE_TO_EB_THRESH_DEFAULT
             db['db_version'] = ('Beta', 1, 1)
             print("Database Updated [Beta V1.0] -> [Beta V1.1]")
-        elif db['db_version'] == ('Beta', 1, 1):
-            print("Database is up-to-date [Beta V1.1]")
-        else:
-            raise RuntimeError("Database cannot be recognized by update utility!")
+        # Beta 1.1 to beta 1.2
+        if db['db_version'] == ('Beta', 1, 1):
+            db['eb_data']['star'] = False
+            db['eb_data']['triangle'] = False
+            db['newbie_data']['star'] = False
+            db['newbie_data']['triangle'] = False
+            db['db_version'] = ('Beta', 1, 2)
+            print("Database Updated [Beta V1.1] -> [Beta V1.2]")
+        if db['db_version'] == ('Beta', 1, 2):
+            print("Database is up-to-date [Beta V1.2]")
 
         return db
     else:
