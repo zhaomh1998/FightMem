@@ -192,7 +192,7 @@ class FightMem:
             elif newbie_db.shape[0] != 0 and newbie_db.iloc[0]['score'] < self.db['newbie_thresh']:
                 knowledge_str = newbie_db.iloc[0]['word']
             else:
-                new_word_id = self.db['new_words'][0]  # get_knowledge will pop it
+                new_word_id = next(iter(self.db['new_words']))  # Hack: get first item without pop. get_knowledge will pop it
                 knowledge_str = self.knowledge.at[new_word_id, 'word']
         elif review_mode == 'Eb Table Only':
             if eb_db.shape[0] != 0:
