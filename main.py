@@ -88,10 +88,9 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.e_newbie_thresh.valueChanged.connect(lambda x: self.backend.set_setting(newbie_thresh=x))
         self.e_newbie2eb_thresh.valueChanged.connect(lambda x: self.backend.set_setting(newbie2eb_thresh=x))
 
-        self.t_table_eb.doubleClicked.connect(self.query_knowledge)
-        self.t_table_new.doubleClicked.connect(self.query_knowledge)
-        self.t_table_trash.doubleClicked.connect(self.query_knowledge)
-        self.t_table_explore.doubleClicked.connect(self.query_knowledge)
+        for table in [self.t_table_eb, self.t_table_new, self.t_table_trash, self.t_table_explore,
+                      self.t_table_star, self.t_table_triangle]:
+            table.doubleClicked.connect(self.query_knowledge)
 
         self.b_triangle.mousePressEvent = self.triangle_cb
         self.b_star.mousePressEvent = self.star_cb

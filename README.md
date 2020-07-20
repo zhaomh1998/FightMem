@@ -39,3 +39,4 @@ python main.py
 - [ ] No more quiz today for a word
 - [ ] Too much consecutive No should downgrade Eb to Newbie
 - [ ] Search functionality for each table
+- [ ] Support cloud backup db (maybe google drive?)
