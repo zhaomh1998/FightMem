@@ -41,6 +41,30 @@ class FightMem:
         self.current_id = None
         self.void = set()  # Stores entries popped out of new_words set but not added to Newbie
 
+    def get_learn_df(self, hide_sln=False, hide_high_score=False):
+        eb_thresh = self.db['eb_thresh'] if hide_high_score else 1
+        newbie_thresh = self.db['newbie_thresh'] if hide_high_score else 1
+        df_eb = self.db['eb_data'].copy()
+        df_eb = df_eb[df_eb['score'] <= eb_thresh].sort_values('score', ignore_index=True)
+        df_eb['Table'] = 'Eb'
+        df_newbie = self.db['newbie_data'].copy()
+        df_newbie = df_newbie[df_newbie['score'] <= newbie_thresh].sort_values('score', ignore_index=True)
+        df_newbie['Table'] = 'Newbie'
+        df_out = pd.concat([df_eb, df_newbie], ignore_index=True)
+        df_out['yes'] = 'O'
+        df_out['no'] = 'X'
+        df_out['trash'] = '🗑'
+        df_out['HourPassed'] = df_out['t_last'].apply(
+            lambda x: round(_time_diff_to_hr(datetime.now(), x), 2)
+        )
+        df_out = df_out.merge(self.knowledge, how='inner', on='word')
+        # Extract out Chinese characters for meaning
+        df_out['mean'] = df_out['mean'].apply(lambda x: ' '.join(re.findall(r'([\u4e00-\u9fa5]+)', x)))
+        if hide_sln:
+            return df_out[['word', 'yes', 'no', 'trash', 'HourPassed', 'Table']]
+        else:
+            return df_out[['word', 'yes', 'no', 'trash', 'HourPassed', 'note', 'mean', 'syn', 'Table']]
+
     def get_eb_df(self, hide_sln=False):
         df_out = self.db['eb_data'].copy()
         df_out['HourPassed'] = df_out['t_last'].apply(

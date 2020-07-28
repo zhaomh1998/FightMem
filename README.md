@@ -1,5 +1,6 @@
 # Project FightMem
-A customized Ebbinghaus Quizzing / Flash Cards App built with PyQt5.
+### Fight towards a permanent memory!
+A smart, customized Ebbinghaus Quizzing / Flash Cards App built with PyQt5.
 
 Learn Page            |  Ebbinghaus Statistics Table
 :-------------------------:|:-------------------------:
@@ -32,7 +33,10 @@ python main.py
 - [x] Explore / Table Review Mode (especially adjacent knowledge)
 - [x] Eb / Newbie / Star / Triangle only quiz-mode
 - [x] TableView hide solution button
+- [x] TableView fast review mode
+- [ ] Today wrong table
 - [ ] ToNewbie table button (to start over)
+- [ ] Handle Ebisu assertion error (maybe reset the word?)
 - [ ] Different way to present multiple new knowledge entry (table?)
 - [ ] Word count more details (today, past week, ...)
 - [ ] Undo last action

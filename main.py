@@ -24,6 +24,7 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.answer_hidden = True
         self.triangle = False
         self.star = False
+        self.active_table = None
 
         self.refresh_ui()
         self.setup_callback()
@@ -88,14 +89,17 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.e_newbie_thresh.valueChanged.connect(lambda x: self.backend.set_setting(newbie_thresh=x))
         self.e_newbie2eb_thresh.valueChanged.connect(lambda x: self.backend.set_setting(newbie2eb_thresh=x))
 
-        for table in [self.t_table_eb, self.t_table_new, self.t_table_trash, self.t_table_explore,
+        self.t_table_learn.clicked.connect(self.table_learn_cb)
+
+        for table in [self.t_table_learn, self.t_table_eb, self.t_table_new, self.t_table_trash, self.t_table_explore,
                       self.t_table_star, self.t_table_triangle]:
             table.doubleClicked.connect(self.query_knowledge)
 
         self.b_triangle.mousePressEvent = self.triangle_cb
         self.b_star.mousePressEvent = self.star_cb
 
-        for hide_button in [self.b_hide_eb, self.b_hide_new, self.b_hide_trash, self.b_hide_explore,
+        for hide_button in [self.b_hide_learn_sln, self.b_hide_learn_hs,
+                            self.b_hide_eb, self.b_hide_new, self.b_hide_trash, self.b_hide_explore,
                             self.b_hide_star, self.b_hide_triangle]:
             hide_button.stateChanged.connect(lambda x: self.page_changed(self.tabWidget.currentIndex()))
 
@@ -107,13 +111,42 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.star = not self.star
         self.refresh_ui()
 
-    def query_knowledge(self, item):
-        if item.column() == 0:
-            # TODO: Refactor to have get_knowledge and get_next coming from same query API
-            self.word, self.pron, self.mean, self.syn, self.ex,\
-                self.note, self.star, self.triangle, self.stat = self.backend.get_knowledge(item.data())
-            self.tabWidget.setCurrentIndex(0)
-            self.toggle_answer(force_to=False)
+    def table_learn_cb(self, item):
+        row, col = item.row(), item.column()
+        if col in [1, 2, 3]:
+            word = self.active_table.iloc[row, 0]
+            self.query_knowledge(word, switch_to_tab=-1)  # Get word selected in backend
+            if col == 1:  # Yes
+                self.next_word('yes')
+            elif col == 2:
+                self.next_word('no')
+            elif col == 3:
+                self.next_word('trash')
+            else:
+                raise RuntimeWarning('Unexpected column click!')
+
+            self.page_changed(self.tabWidget.currentIndex())  # Refresh page
+            self.repaint()
+
+    def query_knowledge(self, item, switch_to_tab=0):
+        """
+        Query a knowledge
+        :param item: If passed as str, directly search. Else if it's a QModelIndex, only query if it's at col=0
+        :param switch_to_tab: Switch to which tab after query. -1 to not switch
+        """
+        if isinstance(item, str):
+            word = item
+        else:
+            if item.column() != 0:
+                return
+            word = item.data()
+
+        # TODO: Refactor to have get_knowledge and get_next coming from same query API
+        self.word, self.pron, self.mean, self.syn, self.ex,\
+            self.note, self.star, self.triangle, self.stat = self.backend.get_knowledge(word)
+        if switch_to_tab >= 0:
+            self.tabWidget.setCurrentIndex(switch_to_tab)
+        self.toggle_answer(force_to=False)
 
     def eventFilter(self, obj, event):
         if event.type() == QtCore.QEvent.MouseButtonPress or event.type() == QtCore.QEvent.MouseButtonDblClick:
@@ -148,27 +181,33 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.next_word('to_eb')
 
     def page_changed(self, change):
-        if change == 1:  # Table page
+        if change == 1:  # Table Learn
+            self.backend.refresh_db_prediction()
+            self.active_table = self.backend.get_learn_df(hide_sln=self.b_hide_learn_sln.checkState(),
+                                                          hide_high_score=self.b_hide_learn_hs.checkState())
+            model = DataFrameModel(self.active_table)
+            self.t_table_learn.setModel(model)
+        if change == 2:  # Table page
             self.backend.refresh_db_prediction()
             model = DataFrameModel(self.backend.get_eb_df(self.b_hide_eb.checkState()))
             self.t_table_eb.setModel(model)
-        elif change == 2:
+        elif change == 3:
             self.backend.refresh_db_prediction()
             model = DataFrameModel(self.backend.get_newbie_df(self.b_hide_new.checkState()))
             self.t_table_new.setModel(model)
-        elif change == 3:
+        elif change == 4:
             model = DataFrameModel(self.backend.get_trash_df(self.b_hide_trash.checkState()))
             self.t_table_trash.setModel(model)
-        elif change == 4:
+        elif change == 5:
             model = DataFrameModel(self.backend.get_knowledge_df(self.b_hide_explore.checkState()))
             self.t_table_explore.setModel(model)
-        elif change == 5:
+        elif change == 6:
             model = DataFrameModel(self.backend.get_star_df(self.b_hide_star.checkState()))
             self.t_table_star.setModel(model)
-        elif change == 6:
+        elif change == 7:
             model = DataFrameModel(self.backend.get_triangle_df(self.b_hide_triangle.checkState()))
             self.t_table_triangle.setModel(model)
-        elif change == 7:
+        elif change == 8:
             version_str, eb_thresh, newbie_thresh, newbie2eb_thresh = self.backend.get_setting()
             self.t_version.setText(version_str)
             self.e_eb_thresh.setValue(eb_thresh)
