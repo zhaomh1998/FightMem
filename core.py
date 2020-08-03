@@ -6,6 +6,7 @@ import re
 import pandas as pd
 from datetime import datetime, timedelta
 import ebisu
+from df2gspread import df2gspread as d2g
 from parameter import EB_MODEL, EB_QUIZ_THRESH_DEFAULT, \
     NEWBIE_MODEL, NEWBIE_QUIZ_THRESH_DEFAULT, NEWBIE_TO_EB_THRESH_DEFAULT
 
@@ -152,9 +153,10 @@ class FightMem:
     def get_setting(self):
         version = self.db['db_version']
         version_str = f"{version[0]} V{version[1]}.{version[2]}"
-        return version_str, self.db['eb_thresh'], self.db['newbie_thresh'], self.db['newbie2eb_thresh']
+        return version_str, self.db['eb_thresh'], self.db['newbie_thresh'], self.db['newbie2eb_thresh'], \
+            self.db['gsheet_id']
 
-    def set_setting(self, eb_thresh=None, newbie_thresh=None, newbie2eb_thresh=None):
+    def set_setting(self, eb_thresh=None, newbie_thresh=None, newbie2eb_thresh=None, gsheet_id=None):
         if eb_thresh is not None:
             assert isinstance(eb_thresh, float)
             assert 0 < eb_thresh < 1
@@ -167,6 +169,10 @@ class FightMem:
             assert isinstance(newbie2eb_thresh, int)
             assert newbie2eb_thresh > 0
             self.db['newbie2eb_thresh'] = newbie2eb_thresh
+        if gsheet_id is not None:
+            print(f'Updating gsheet id to >{gsheet_id}<')
+            assert isinstance(gsheet_id, str)
+            self.db['gsheet_id'] = gsheet_id
 
     def refresh_db_prediction(self):
         for db_name in ['eb_data', 'newbie_data']:
@@ -377,6 +383,23 @@ class FightMem:
         pickle.dump(self.knowledge, open(self.knowledge_path, 'wb'))
         pickle.dump(self.db, open(self.db_path, 'wb'))
 
+    def sync_gs(self):
+        assert len(self.db['gsheet_id']) != 0, 'Google Sheet ID cannot be empty! Please find the sheet id from link:' \
+                                               'https://docs.google.com/spreadsheets/d/<sheet id>/edit'
+        print('Uploading Eb...')
+        d2g.upload(self.get_eb_df(), self.db['gsheet_id'], 'Eb')
+        print('Uploading Learn...')
+        d2g.upload(self.get_learn_df(), self.db['gsheet_id'], 'Learn')
+        print('Uploading Newbie...')
+        d2g.upload(self.get_newbie_df(), self.db['gsheet_id'], 'Newbie')
+        print('Uploading Star...')
+        d2g.upload(self.get_star_df(), self.db['gsheet_id'], 'Star')
+        print('Uploading Triangle...')
+        d2g.upload(self.get_triangle_df(), self.db['gsheet_id'], 'Triangle')
+        print('Uploading All...')
+        d2g.upload(self.get_knowledge_df(), self.db['gsheet_id'], 'All')
+        print('Google Sheet Sync completed!')
+
 
 def _time_diff_to_hr(time_a, time_b):
     one_hour = timedelta(hours=1)
@@ -402,8 +425,13 @@ def _load_update_db(path):
             db['newbie_data']['triangle'] = False
             db['db_version'] = ('Beta', 1, 2)
             print("Database Updated [Beta V1.1] -> [Beta V1.2]")
+        # Beta 1.2 to beta 1.3
         if db['db_version'] == ('Beta', 1, 2):
-            print("Database is up-to-date [Beta V1.2]")
+            db['gsheet_id'] = ''
+            db['db_version'] = ('Beta', 1, 3)
+            print("Database Updated [Beta V1.2] -> [Beta V1.3]")
+        if db['db_version'] == ('Beta', 1, 3):
+            print("Database is up-to-date [Beta V1.3]")
 
         return db
     else:

@@ -17,7 +17,15 @@ The two lists has differently turned Ebisu parameters to serve their purpose. Re
 An entry will first get into `Newbie List` and being tested very frequently, until enough correct quiz results, during when it will be transferred into `Eb List` for longer quizzing intervals in order to achieve long time memory.
 
 ## Run
-First make the knowledge file -- essentially a Pandas DataFrame. `pdf2knowledge.py` serves this purpose for the document that the developer use.
+First make the knowledge file -- essentially a Pandas DataFrame. `pdf2knowledge.py` serves this purpose for the document that the developer uses.
+
+
+First install required packages,
+```python
+pip install -r requirements.txt
+```
+
+If you want to use Google Sheet sync functionality, set up according to [df2gspread documentation](https://df2gspread.readthedocs.io/en/latest/overview.html#access-credentials)
 
 To run the GUI,
 ```python
@@ -34,6 +42,7 @@ python main.py
 - [x] Eb / Newbie / Star / Triangle only quiz-mode
 - [x] TableView hide solution button
 - [x] TableView fast review mode
+- [x] Google sheet sync
 - [ ] Today wrong table
 - [ ] ToNewbie table button (to start over)
 - [ ] Handle Ebisu assertion error (maybe reset the word?)

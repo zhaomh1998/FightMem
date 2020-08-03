@@ -88,8 +88,9 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.e_eb_thresh.valueChanged.connect(lambda x: self.backend.set_setting(eb_thresh=x))
         self.e_newbie_thresh.valueChanged.connect(lambda x: self.backend.set_setting(newbie_thresh=x))
         self.e_newbie2eb_thresh.valueChanged.connect(lambda x: self.backend.set_setting(newbie2eb_thresh=x))
-
+        self.e_gsheet_id.textChanged.connect(lambda: self.backend.set_setting(gsheet_id=self.e_gsheet_id.toPlainText()))
         self.t_table_learn.clicked.connect(self.table_learn_cb)
+        self.b_sync_gsheet.clicked.connect(self.backend.sync_gs)
 
         for table in [self.t_table_learn, self.t_table_eb, self.t_table_new, self.t_table_trash, self.t_table_explore,
                       self.t_table_star, self.t_table_triangle]:
@@ -208,11 +209,12 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             model = DataFrameModel(self.backend.get_triangle_df(self.b_hide_triangle.checkState()))
             self.t_table_triangle.setModel(model)
         elif change == 8:
-            version_str, eb_thresh, newbie_thresh, newbie2eb_thresh = self.backend.get_setting()
+            version_str, eb_thresh, newbie_thresh, newbie2eb_thresh, gsheet_id = self.backend.get_setting()
             self.t_version.setText(version_str)
             self.e_eb_thresh.setValue(eb_thresh)
             self.e_newbie_thresh.setValue(newbie_thresh)
             self.e_newbie2eb_thresh.setValue(newbie2eb_thresh)
+            self.e_gsheet_id.setPlainText(gsheet_id)
 
     def toggle_answer(self, force_to=None):
         if force_to is None:
