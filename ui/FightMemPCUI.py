@@ -122,30 +122,30 @@ class Ui_MainWindow(object):
         self.horizontalLayout.setObjectName("horizontalLayout")
         spacerItem3 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem3)
-        self.b_yes = QtWidgets.QPushButton(self.tab_learn)
+        self.b_long = QtWidgets.QPushButton(self.tab_learn)
         font = QtGui.QFont()
         font.setFamily("Menlo")
         font.setPointSize(24)
-        self.b_yes.setFont(font)
-        self.b_yes.setStyleSheet("QPushButton\n"
+        self.b_long.setFont(font)
+        self.b_long.setStyleSheet("QPushButton\n"
 "{\n"
 "   color:#009688;\n"
 "}")
-        self.b_yes.setObjectName("b_yes")
-        self.horizontalLayout.addWidget(self.b_yes)
+        self.b_long.setObjectName("b_long")
+        self.horizontalLayout.addWidget(self.b_long)
         spacerItem4 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem4)
-        self.b_no = QtWidgets.QPushButton(self.tab_learn)
+        self.b_bury = QtWidgets.QPushButton(self.tab_learn)
         font = QtGui.QFont()
         font.setFamily("Menlo")
         font.setPointSize(24)
-        self.b_no.setFont(font)
-        self.b_no.setStyleSheet("QPushButton\n"
+        self.b_bury.setFont(font)
+        self.b_bury.setStyleSheet("QPushButton\n"
 "{\n"
 "   color:#FF5722;\n"
 "}")
-        self.b_no.setObjectName("b_no")
-        self.horizontalLayout.addWidget(self.b_no)
+        self.b_bury.setObjectName("b_bury")
+        self.horizontalLayout.addWidget(self.b_bury)
         spacerItem5 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem5)
         self.b_show = QtWidgets.QPushButton(self.tab_learn)
@@ -420,8 +420,8 @@ class Ui_MainWindow(object):
 "p, li { white-space: pre-wrap; }\n"
 "</style></head><body style=\" font-family:\'Hannotate SC\'; font-size:20pt; font-weight:400; font-style:normal;\">\n"
 "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'Sinhala Sangam MN\';\"><br /></p></body></html>"))
-        self.b_yes.setText(_translate("MainWindow", " Yes "))
-        self.b_no.setText(_translate("MainWindow", " No "))
+        self.b_long.setText(_translate("MainWindow", "Long"))
+        self.b_bury.setText(_translate("MainWindow", "Bury"))
         self.b_show.setText(_translate("MainWindow", "Show"))
         self.b_to_eb.setText(_translate("MainWindow", "ToEb"))
         self.b_trash.setText(_translate("MainWindow", "Trash"))

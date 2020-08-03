@@ -43,13 +43,13 @@ python main.py
 - [x] TableView hide solution button
 - [x] TableView fast review mode
 - [x] Google sheet sync
+- [x] Handle Ebisu assertion error (maybe reset the word?)
+- [x] Different way to present multiple new knowledge entry (table?)
+- [x] No more quiz today for a word (Bury)
 - [ ] Today wrong table
 - [ ] ToNewbie table button (to start over)
-- [ ] Handle Ebisu assertion error (maybe reset the word?)
-- [ ] Different way to present multiple new knowledge entry (table?)
 - [ ] Word count more details (today, past week, ...)
 - [ ] Undo last action
-- [ ] No more quiz today for a word
 - [ ] Too much consecutive No should downgrade Eb to Newbie
 - [ ] Search functionality for each table
 - [ ] Support cloud backup db (maybe google drive?)

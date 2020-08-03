@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 import ebisu
 from df2gspread import df2gspread as d2g
 from parameter import EB_MODEL, EB_QUIZ_THRESH_DEFAULT, \
-    NEWBIE_MODEL, NEWBIE_QUIZ_THRESH_DEFAULT, NEWBIE_TO_EB_THRESH_DEFAULT
+    NEWBIE_MODEL, NEWBIE_QUIZ_THRESH_DEFAULT, NEWBIE_TO_EB_THRESH_DEFAULT, NEWBIE_RETEST_SCHEDULE, LONG_MODEL
 
 
 class FightMem:
@@ -38,6 +38,8 @@ class FightMem:
                 'newbie2eb_thresh': NEWBIE_TO_EB_THRESH_DEFAULT,
                 'db_version': ('Beta', 1, 1)
             }
+            pickle.dump(self.db, open(self.db_path, 'wb'))
+            self.db = _load_update_db(self.db_path)
 
         self.current_id = None
         self.void = set()  # Stores entries popped out of new_words set but not added to Newbie
@@ -78,9 +80,9 @@ class FightMem:
         # Extract out Chinese characters for meaning
         df_out['mean'] = df_out['mean'].apply(lambda x: ' '.join(re.findall(r'([\u4e00-\u9fa5]+)', x)))
         if hide_sln:
-            return df_out[['word', 'score', 'HourPassed', 'Model_T', 'Model_A', 'Model_B']]
+            return df_out[['word', 'score', 'HourPassed', 'Model_T', 'Model_A', 'Model_B', 'bury', 'bury_t']]
         else:
-            return df_out[['word', 'score', 'mean', 'syn', 'HourPassed', 'Model_T', 'Model_A', 'Model_B', ]]
+            return df_out[['word', 'score', 'mean', 'syn', 'HourPassed', 'Model_T', 'Model_A', 'Model_B', 'bury', 'bury_t']]
 
     def get_newbie_df(self, hide_sln=False):
         df_out = self.db['newbie_data'].copy()
@@ -91,9 +93,9 @@ class FightMem:
         # Extract out Chinese characters for meaning
         df_out['mean'] = df_out['mean'].apply(lambda x: ' '.join(re.findall(r'([\u4e00-\u9fa5]+)', x)))
         if hide_sln:
-            return df_out[['word', 'score', 'MinPassed', 'correct']]
+            return df_out[['word', 'score', 'MinPassed', 'NextReview', 'correct']]
         else:
-            return df_out[['word', 'score', 'mean', 'syn', 'MinPassed', 'correct']]
+            return df_out[['word', 'score', 'mean', 'syn', 'MinPassed', 'NextReview', 'correct']]
 
     def get_trash_df(self, hide_sln=False):
         old_words = self.knowledge.index.difference(self.knowledge.loc[self.db['new_words']].index)
@@ -176,9 +178,23 @@ class FightMem:
 
     def refresh_db_prediction(self):
         for db_name in ['eb_data', 'newbie_data']:
-            self.db[db_name] = self.db[db_name].apply(self.eb_update_score, axis=1)
-            self.db[db_name].sort_values(by='score', ascending=True, inplace=True)
-            self.db[db_name].reset_index(drop=True, inplace=True)
+            if self.db[db_name].shape[0] != 0:
+                self.db[db_name] = self.db[db_name].apply(self.eb_update_score, axis=1)
+
+        if self.db['eb_data'].shape[0] != 0:
+            self.db['eb_data'].sort_values(by='score', ascending=True, inplace=True, ignore_index=True)
+            self.db['eb_data']['bury'] = self.db['eb_data']['bury_t'].apply(lambda x: x.date() == datetime.today().date())
+
+        if self.db['newbie_data'].shape[0] != 0:
+            self.db['newbie_data']['NextReview'] = self.db['newbie_data']['t_last'].apply(
+                lambda x: round(_time_diff_to_hr(datetime.now(), x) * 60, 2)
+            )
+            self.db['newbie_data']['NextReview'] = self.db['newbie_data']['t_last'].apply(
+                lambda x: round(_time_diff_to_hr(datetime.now(), x) * 60, 2)
+            )
+            self.db['newbie_data']['NextReview'] = self.db['newbie_data']['correct'].apply(NEWBIE_RETEST_SCHEDULE) \
+                - self.db['newbie_data']['NextReview']
+            self.db['newbie_data'].sort_values(by='NextReview', ascending=True, inplace=True, ignore_index=True)
 
     def eb_update_score(self, entry):
         entry['score'] = round(ebisu.predictRecall(
@@ -188,8 +204,13 @@ class FightMem:
         ), 4)
         return entry
 
-    def new_entry(self, db_name, entry_id, total=0, correct=0, start_model=EB_MODEL, star=False, triangle=False):
+    def new_entry(self, db_name, entry_id, total=0, correct=0, start_model=EB_MODEL, star=False, triangle=False,
+                  bury=False):
         # db_name: eb_data or newbie_data
+        if not bury:
+            bury_t = datetime(year=1970, month=1, day=1)
+        else:
+            bury_t = datetime.now()
         assert isinstance(db_name, str)
         assert db_name in self.db.keys()
         data = self.knowledge.loc[entry_id].to_dict()
@@ -202,7 +223,9 @@ class FightMem:
             't_last': datetime.now(),
             'score': 1,
             'star': star,
-            'triangle': triangle
+            'triangle': triangle,
+            'bury_t': bury_t,
+            'bury': False
         }, ignore_index=True)
 
     def get_next_quiz(self, review_mode):
@@ -211,6 +234,7 @@ class FightMem:
                                                                 'Starred', 'Triangled']
         self.refresh_db_prediction()  # Required -- this sorts DBs by score
         eb_db = self.db['eb_data']
+        eb_db = eb_db[eb_db['bury'] == False]
         newbie_db = self.db['newbie_data']
         knowledge_str = None
         if review_mode == 'Normal':
@@ -219,7 +243,7 @@ class FightMem:
             # Third priority get new words into Newbie
             if eb_db.shape[0] != 0 and eb_db.iloc[0]['score'] < self.db['eb_thresh']:
                 knowledge_str = eb_db.iloc[0]['word']
-            elif newbie_db.shape[0] != 0 and newbie_db.iloc[0]['score'] < self.db['newbie_thresh']:
+            elif newbie_db.shape[0] != 0 and newbie_db.iloc[0]['NextReview'] < 0:
                 knowledge_str = newbie_db.iloc[0]['word']
             else:
                 new_word_id = next(iter(self.db['new_words']))  # Hack: get first item without pop. get_knowledge will pop it
@@ -304,24 +328,38 @@ class FightMem:
         return entry['word'], entry['pron'], entry['mean'], entry['syn'], entry['ex'], \
                entry['note'], bool(star), bool(triangle), stat  # Cast np.bool_ star and triangle to Python
 
-    def eb_update_model(self, eb_df, correct, star, triangle):
+    def eb_update_model(self, eb_df, correct, star, triangle, overwrite_model=None, bury=False):
         item_index = eb_df[eb_df['id'] == self.current_id].index[0]
         eb_df.at[item_index, 'total'] += 1
         eb_df.at[item_index, 'correct'] += 1 if correct else 0
-        new_model = ebisu.updateRecall(
-            prior=eb_df.loc[item_index, 'model'],
-            successes=eb_df.loc[item_index, 'correct'],
-            total=eb_df.loc[item_index, 'total'],
-            tnow=_time_diff_to_hr(eb_df.loc[item_index, 't_last'], datetime.now())
-        )
+        if overwrite_model is None:
+            try:
+                new_model = ebisu.updateRecall(
+                    prior=eb_df.loc[item_index, 'model'],
+                    successes=eb_df.loc[item_index, 'correct'],
+                    total=eb_df.loc[item_index, 'total'],
+                    tnow=_time_diff_to_hr(eb_df.loc[item_index, 't_last'], datetime.now())
+                )
+            except AssertionError as e:
+                print('Ebisu model was very surprised with the result!')
+                print(e)
+                print('Resetting the model')
+                new_model = EB_MODEL
+                eb_df.at[item_index, 'total'] = 1
+                eb_df.at[item_index, 'correct'] = 1
+        else:
+            assert isinstance(overwrite_model, tuple) and len(overwrite_model) == 3
+            new_model = overwrite_model
         eb_df.at[item_index, 'model'] = new_model  # Note: loc can't assign tuple to a cell
         eb_df.at[item_index, 't_last'] = datetime.now()
         eb_df.at[item_index, 'star'] = star
         eb_df.at[item_index, 'triangle'] = triangle
+        if bury:
+            eb_df.at[item_index, 'bury_t'] = datetime.now()
 
     def set_quiz_result(self, result, note_updated, star, triangle):
         """ High level API to set quiz result """
-        assert result in ['yes', 'no', 'to_eb', 'trash', 'init']
+        assert result in ['yes', 'no', 'to_eb', 'trash', 'init', 'long', 'bury']
         assert isinstance(star, bool)
         assert isinstance(triangle, bool)
         if result != 'init':
@@ -342,6 +380,10 @@ class FightMem:
                     pass
                 elif result == 'trash':
                     eb_df.drop(eb_df.loc[eb_df['id'] == self.current_id].index, inplace=True)
+                elif result == 'long':
+                    self.eb_update_model(eb_df, correct=True, star=star, triangle=triangle, overwrite_model=LONG_MODEL)
+                elif result == 'bury':
+                    self.eb_update_model(eb_df, correct=True, star=star, triangle=triangle, bury=True)
                 self.refresh_db_prediction()
 
             elif (newbie_df['id'] == self.current_id).any():  # Word in Newbie Database
@@ -364,6 +406,12 @@ class FightMem:
                     self.new_entry('eb_data', self.current_id, total=1, correct=1)
                 elif result == 'trash':
                     newbie_df.drop(entry_index, inplace=True)
+                elif result == 'long':
+                    newbie_df.drop(entry_index, inplace=True)
+                    self.new_entry('eb_data', self.current_id, total=1, correct=1, start_model=LONG_MODEL)
+                elif result == 'bury':
+                    newbie_df.drop(entry_index, inplace=True)
+                    self.new_entry('eb_data', self.current_id, total=1, correct=1, bury=True)
                 self.refresh_db_prediction()
 
             else:  # Add to Newbie Word Database
@@ -375,7 +423,10 @@ class FightMem:
                     self.new_entry('eb_data', self.current_id, total=1, correct=1)
                 elif result == 'trash':
                     pass  # Does not add to review list
-
+                elif result == 'long':
+                    self.new_entry('eb_data', self.current_id, total=1, correct=1, start_model=LONG_MODEL)
+                elif result == 'bury':
+                    self.new_entry('eb_data', self.current_id, total=1, correct=1, bury=True)
             self.save()
 
     def save(self):
@@ -430,8 +481,16 @@ def _load_update_db(path):
             db['gsheet_id'] = ''
             db['db_version'] = ('Beta', 1, 3)
             print("Database Updated [Beta V1.2] -> [Beta V1.3]")
+        # Beta 1.3 to beta 1.4
         if db['db_version'] == ('Beta', 1, 3):
-            print("Database is up-to-date [Beta V1.3]")
+            db['eb_data']['bury_t'] = datetime(year=1970, month=1, day=1)
+            db['eb_data']['bury'] = False
+            db['newbie_data']['bury_t'] = datetime(year=1970, month=1, day=1)
+            db['newbie_data']['bury'] = False
+            db['db_version'] = ('Beta', 1, 4)
+            print("Database Updated [Beta V1.3] -> [Beta V1.4]")
+        if db['db_version'] == ('Beta', 1, 4):
+            print("Database is up-to-date [Beta V1.4]")
 
         return db
     else:

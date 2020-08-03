@@ -260,7 +260,7 @@ p, li { white-space: pre-wrap; }
                </spacer>
               </item>
               <item>
-               <widget class="QPushButton" name="b_yes">
+               <widget class="QPushButton" name="b_long">
                 <property name="font">
                  <font>
                   <family>Menlo</family>
@@ -274,7 +274,7 @@ p, li { white-space: pre-wrap; }
 }</string>
                 </property>
                 <property name="text">
-                 <string> Yes </string>
+                 <string>Long</string>
                 </property>
                </widget>
               </item>
@@ -292,7 +292,7 @@ p, li { white-space: pre-wrap; }
                </spacer>
               </item>
               <item>
-               <widget class="QPushButton" name="b_no">
+               <widget class="QPushButton" name="b_bury">
                 <property name="font">
                  <font>
                   <family>Menlo</family>
@@ -306,7 +306,7 @@ p, li { white-space: pre-wrap; }
 }</string>
                 </property>
                 <property name="text">
-                 <string> No </string>
+                 <string>Bury</string>
                 </property>
                </widget>
               </item>
