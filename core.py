@@ -3,12 +3,14 @@ import os
 import numbers
 import shutil
 import re
-import pandas as pd
+import time
 from datetime import datetime, timedelta
+import pandas as pd
 import ebisu
 from df2gspread import df2gspread as d2g
 from parameter import EB_MODEL, EB_QUIZ_THRESH_DEFAULT, \
-    NEWBIE_MODEL, NEWBIE_QUIZ_THRESH_DEFAULT, NEWBIE_TO_EB_THRESH_DEFAULT, NEWBIE_RETEST_SCHEDULE, LONG_MODEL
+    NEWBIE_MODEL, NEWBIE_QUIZ_THRESH_DEFAULT, NEWBIE_TO_EB_THRESH_DEFAULT, NEWBIE_RETEST_SCHEDULE, LONG_MODEL, \
+    HP_FULL, HP_AWARD_EB, HP_AWARD_NEWBIE, HP_AWARD_NEW
 
 
 class FightMem:
@@ -43,6 +45,8 @@ class FightMem:
 
         self.current_id = None
         self.void = set()  # Stores entries popped out of new_words set but not added to Newbie
+        self.hp = HP_FULL
+        self.hp_t = time.time()
 
     def get_learn_df(self, hide_sln=False, hide_high_score=False):
         eb_thresh = self.db['eb_thresh'] if hide_high_score else 1
@@ -293,6 +297,7 @@ class FightMem:
             stat += '[Eb]     Correct ' + str(eb_db.loc[entry_index, 'correct']) + '/' \
                     + str(eb_db.loc[entry_index, 'total']) + ' = ' \
                     + str(round(eb_db.loc[entry_index, 'correct'] * 100 / eb_db.loc[entry_index, 'total'], 2)) + '%\n'
+            stat += f'            HL: ' + str(round(eb_db.loc[entry_index, 'model'][2], 2)) + '\n'
         # Search in Newbie
         elif (newbie_db['word'] == knowledge_str).any():
             entry_index = newbie_db[newbie_db['word'] == knowledge_str].index[0]
@@ -324,7 +329,9 @@ class FightMem:
 
         # Sanity check
         assert isinstance(self.current_id, numbers.Integral)
-        stat += '            Remaining: ' + str(len(self.db['new_words']))
+        review_cnt = self.db['eb_data'][self.db['eb_data']['score'] < self.db['eb_thresh']].count().iloc[0]
+        stat += '            Remaining: N ' + str(len(self.db['new_words'])) + ', R ' + str(review_cnt)
+
         return entry['word'], entry['pron'], entry['mean'], entry['syn'], entry['ex'], \
                entry['note'], bool(star), bool(triangle), stat  # Cast np.bool_ star and triangle to Python
 
@@ -369,7 +376,9 @@ class FightMem:
 
             eb_df = self.db['eb_data']
             newbie_df = self.db['newbie_data']
+            hp_award = 0
             if (eb_df['id'] == self.current_id).any():  # Word in EB Database
+                hp_award = HP_AWARD_EB
                 if result == 'yes':
                     self.eb_update_model(eb_df, correct=True, star=star, triangle=triangle)
                 elif result == 'no':
@@ -387,6 +396,7 @@ class FightMem:
                 self.refresh_db_prediction()
 
             elif (newbie_df['id'] == self.current_id).any():  # Word in Newbie Database
+                hp_award = HP_AWARD_NEWBIE
                 entry_index = newbie_df[newbie_df['id'] == self.current_id].index
                 if result == 'yes':
                     self.eb_update_model(newbie_df, correct=True, star=star, triangle=triangle)
@@ -415,6 +425,7 @@ class FightMem:
                 self.refresh_db_prediction()
 
             else:  # Add to Newbie Word Database
+                hp_award = HP_AWARD_NEW
                 if result == 'yes':
                     self.new_entry('newbie_data', self.current_id, total=1, correct=1, start_model=NEWBIE_MODEL)
                 elif result == 'no':
@@ -428,6 +439,12 @@ class FightMem:
                 elif result == 'bury':
                     self.new_entry('eb_data', self.current_id, total=1, correct=1, bury=True)
             self.save()
+
+            # Update HP bar with reward
+            # No threading involved for HP bar update so shouldn't have race condition?
+            # NOTE: +1 so that it can be displayed as full for some time
+            self.hp = min(self.get_hp() + hp_award, HP_FULL + 1)
+            self.hp_t = time.time()
 
     def save(self):
         self.db['new_words'] = self.db['new_words'].union(self.void)
@@ -450,6 +467,9 @@ class FightMem:
         print('Uploading All...')
         d2g.upload(self.get_knowledge_df(), self.db['gsheet_id'], 'All')
         print('Google Sheet Sync completed!')
+
+    def get_hp(self):
+        return max(0, int(self.hp - (time.time() - self.hp_t)))
 
 
 def _time_diff_to_hr(time_a, time_b):

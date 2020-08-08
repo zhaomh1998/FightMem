@@ -1,10 +1,11 @@
+import sys
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import QShortcut
-from PyQt5.QtCore import QFileInfo
+from PyQt5.QtCore import QFileInfo, QTimer
 from ui.FightMemPCUI import *
-import core
 from ui.DataFrameView import DataFrameModel
-import sys
+import core
+import parameter
 
 
 class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
@@ -25,6 +26,7 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.triangle = False
         self.star = False
         self.active_table = None
+        self.hp_bar_timer = None
 
         self.refresh_ui()
         self.setup_callback()
@@ -66,6 +68,7 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         else:
             self.b_triangle.setPixmap(QtGui.QPixmap('ui/triangle_empty.png'))
 
+        self.hp_bar.setMaximum(parameter.HP_FULL)
         self.repaint()
 
     def setup_callback(self):
@@ -103,6 +106,15 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                             self.b_hide_eb, self.b_hide_new, self.b_hide_trash, self.b_hide_explore,
                             self.b_hide_star, self.b_hide_triangle]:
             hide_button.stateChanged.connect(lambda x: self.page_changed(self.tabWidget.currentIndex()))
+
+        # HP Bar
+        self.hp_bar_timer = QTimer()
+        self.hp_bar_timer.timeout.connect(self.update_hp_bar)
+        self.hp_bar_timer.start(100)
+
+    def update_hp_bar(self):
+        hp = self.backend.get_hp()
+        self.hp_bar.setValue(hp)
 
     def triangle_cb(self, event):
         self.triangle = not self.triangle

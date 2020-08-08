@@ -46,9 +46,10 @@ python main.py
 - [x] Handle Ebisu assertion error (maybe reset the word?)
 - [x] Different way to present multiple new knowledge entry (table?)
 - [x] No more quiz today for a word (Bury)
+- [x] Word count more details
+- [x] HP Bar for fast recall training
 - [ ] Today wrong table
 - [ ] ToNewbie table button (to start over)
-- [ ] Word count more details (today, past week, ...)
 - [ ] Undo last action
 - [ ] Too much consecutive No should downgrade Eb to Newbie
 - [ ] Search functionality for each table

@@ -6,6 +6,12 @@ NEWBIE_QUIZ_THRESH_DEFAULT = 0.9
 NEWBIE_TO_EB_THRESH_DEFAULT = 3
 LONG_MODEL = (2., 2., 24.)
 
+HP_FULL = 120
+# How many seconds should one knowledge in corresponding bank take to answer
+HP_AWARD_EB = 5
+HP_AWARD_NEWBIE = 8
+HP_AWARD_NEW = 15
+
 
 def NEWBIE_RETEST_SCHEDULE(correct_count):
     if correct_count == 0:

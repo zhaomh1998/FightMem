@@ -30,6 +30,16 @@
           <item>
            <layout class="QVBoxLayout" name="verticalLayout">
             <item>
+             <widget class="QProgressBar" name="hp_bar">
+              <property name="maximum">
+               <number>120</number>
+              </property>
+              <property name="value">
+               <number>120</number>
+              </property>
+             </widget>
+            </item>
+            <item>
              <widget class="QLabel" name="t_word">
               <property name="font">
                <font>
