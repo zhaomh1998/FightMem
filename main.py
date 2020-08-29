@@ -1,9 +1,11 @@
 import sys
+from queue import Queue
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import QShortcut
 from PyQt5.QtCore import QFileInfo, QTimer
 from ui.FightMemPCUI import *
 from ui.DataFrameView import DataFrameModel
+import tts
 import core
 import parameter
 
@@ -27,7 +29,10 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.star = False
         self.active_table = None
         self.hp_bar_timer = None
-
+        self.tts_queue = Queue()
+        self.tts_worker = tts.TTSWorker(self.tts_queue)
+        self.tts_worker.start()
+        self.tts_queue.put('Fight Mem TTS service has started')
         self.refresh_ui()
         self.setup_callback()
         self.next_word('init')
@@ -157,6 +162,7 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # TODO: Refactor to have get_knowledge and get_next coming from same query API
         self.word, self.pron, self.mean, self.syn, self.ex,\
             self.note, self.star, self.triangle, self.stat = self.backend.get_knowledge(word)
+        self.tts_queue.put(self.word)
         if switch_to_tab >= 0:
             self.tabWidget.setCurrentIndex(switch_to_tab)
         self.toggle_answer(force_to=False)
@@ -250,6 +256,7 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # Get next info from backend
         self.word, self.pron, self.mean, self.syn, self.ex, \
             self.note, self.star, self.triangle, self.stat = self.backend.get_next_quiz(self.e_mode.currentText())
+        self.tts_queue.put(self.word)
         self.toggle_answer(force_to=True)
 
 
