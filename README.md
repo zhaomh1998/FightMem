@@ -48,7 +48,8 @@ python main.py
 - [x] No more quiz today for a word (Bury)
 - [x] Word count more details
 - [x] HP Bar for fast recall training
-- [x] answer 'Hard': half the half-life
+- [x] Half the half-life (Hard -- mouse middle button on Fn)
+- [x] Automatic TTS (Text-to-speech)
 - [ ] Today wrong table
 - [ ] ToNewbie table button (to start over)
 - [ ] Undo last action
