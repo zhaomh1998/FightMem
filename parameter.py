@@ -12,6 +12,9 @@ HP_AWARD_EB = 5
 HP_AWARD_NEWBIE = 8
 HP_AWARD_NEW = 15
 
+# Hard punishment
+HARD_PUNISH_MULTIPLIER = 2  # hl /= 2
+
 
 def NEWBIE_RETEST_SCHEDULE(correct_count):
     if correct_count == 0:

@@ -191,7 +191,7 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             if self.answer_hidden:
                 self.toggle_answer()
             else:
-                self.next_word('to_eb')
+                self.next_word('hard')
 
     def page_changed(self, change):
         if change == 1:  # Table Learn

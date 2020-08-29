@@ -10,7 +10,7 @@ import ebisu
 from df2gspread import df2gspread as d2g
 from parameter import EB_MODEL, EB_QUIZ_THRESH_DEFAULT, \
     NEWBIE_MODEL, NEWBIE_QUIZ_THRESH_DEFAULT, NEWBIE_TO_EB_THRESH_DEFAULT, NEWBIE_RETEST_SCHEDULE, LONG_MODEL, \
-    HP_FULL, HP_AWARD_EB, HP_AWARD_NEWBIE, HP_AWARD_NEW
+    HP_FULL, HP_AWARD_EB, HP_AWARD_NEWBIE, HP_AWARD_NEW, HARD_PUNISH_MULTIPLIER
 
 
 class FightMem:
@@ -335,7 +335,7 @@ class FightMem:
         return entry['word'], entry['pron'], entry['mean'], entry['syn'], entry['ex'], \
                entry['note'], bool(star), bool(triangle), stat  # Cast np.bool_ star and triangle to Python
 
-    def eb_update_model(self, eb_df, correct, star, triangle, overwrite_model=None, bury=False):
+    def eb_update_model(self, eb_df, correct, star, triangle, overwrite_model=None, bury=False, hl_modify=1):
         item_index = eb_df[eb_df['id'] == self.current_id].index[0]
         eb_df.at[item_index, 'total'] += 1
         eb_df.at[item_index, 'correct'] += 1 if correct else 0
@@ -347,6 +347,8 @@ class FightMem:
                     total=eb_df.loc[item_index, 'total'],
                     tnow=_time_diff_to_hr(eb_df.loc[item_index, 't_last'], datetime.now())
                 )
+                # For 'hard' response punishment
+                new_model = (new_model[0], new_model[1], new_model[2] / hl_modify)
             except AssertionError as e:
                 print('Ebisu model was very surprised with the result!')
                 print(e)
@@ -366,7 +368,7 @@ class FightMem:
 
     def set_quiz_result(self, result, note_updated, star, triangle):
         """ High level API to set quiz result """
-        assert result in ['yes', 'no', 'to_eb', 'trash', 'init', 'long', 'bury']
+        assert result in ['yes', 'no', 'to_eb', 'trash', 'init', 'long', 'bury', 'hard']
         assert isinstance(star, bool)
         assert isinstance(triangle, bool)
         if result != 'init':
@@ -383,6 +385,9 @@ class FightMem:
                     self.eb_update_model(eb_df, correct=True, star=star, triangle=triangle)
                 elif result == 'no':
                     self.eb_update_model(eb_df, correct=False, star=star, triangle=triangle)
+                elif result == 'hard':
+                    self.eb_update_model(eb_df, correct=False, star=star, triangle=triangle,
+                                         hl_modify=HARD_PUNISH_MULTIPLIER)
                 elif result == 'to_eb':
                     # No action taken -- Already in eb
                     # TODO: Make it ToNew instead
@@ -405,7 +410,7 @@ class FightMem:
                     if correct > self.db['newbie2eb_thresh']:
                         newbie_df.drop(entry_index, inplace=True)
                         self.new_entry('eb_data', self.current_id, total=1, correct=1)
-                elif result == 'no':
+                elif result == 'no' or result == 'hard':
                     self.eb_update_model(newbie_df, correct=False, star=star, triangle=triangle)
                     correct = newbie_df.at[entry_index[0], 'correct']
                     # Punish as wrong answer provided: correct - 1
@@ -428,7 +433,7 @@ class FightMem:
                 hp_award = HP_AWARD_NEW
                 if result == 'yes':
                     self.new_entry('newbie_data', self.current_id, total=1, correct=1, start_model=NEWBIE_MODEL)
-                elif result == 'no':
+                elif result == 'no' or result == 'hard':
                     self.new_entry('newbie_data', self.current_id, total=1, correct=0, start_model=NEWBIE_MODEL)
                 elif result == 'to_eb':
                     self.new_entry('eb_data', self.current_id, total=1, correct=1)
