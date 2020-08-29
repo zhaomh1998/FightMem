@@ -1,5 +1,6 @@
 import os
 import time
+import traceback
 from gtts import gTTS
 from PyQt5.QtCore import *
 from playsound import playsound
@@ -15,7 +16,7 @@ def get_tts(text):
     text_save = text.replace(' ', '_')
     save_file = os.path.join(storage_folder, f'{text_save}.mp3')
     if not os.path.exists(save_file):
-        tts = gTTS(text)
+        tts = gTTS(text, lang='en')
         tts.save(save_file)
     return save_file
 
@@ -30,7 +31,10 @@ class TTSWorker(QThread):
             if not self.q.empty():
                 msg = self.q.get()
                 assert isinstance(msg, str), f'Expected string to be tts\'d! Got {type(msg)}: {msg}'
-                playsound(get_tts(msg))
+                try:
+                    playsound(get_tts(msg))
+                except:
+                    traceback.print_exc()
 
             time.sleep(0.1)
 
