@@ -29,7 +29,7 @@ If you want to use Google Sheet sync functionality, set up according to [df2gspr
 
 To run the GUI,
 ```bash
-fman run
+fbs run
 ```
 
 or,
