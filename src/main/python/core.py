@@ -17,7 +17,7 @@ class FightMem:
     def __init__(self, data_fold_path, knowledge_file, database_file=None):
         assert os.path.exists(data_fold_path), '\'data\' folder not found!'
         self.knowledge_path = os.path.join(data_fold_path, knowledge_file)
-        backup_fold = os.path.join(data_fold_path, 'bak')
+        backup_fold = os.path.join(os.path.expanduser('~'), '.fmbak')
         if not os.path.exists(backup_fold):
             os.mkdir(backup_fold)
 
