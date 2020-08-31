@@ -14,21 +14,26 @@ from parameter import EB_MODEL, EB_QUIZ_THRESH_DEFAULT, \
 
 
 class FightMem:
-    def __init__(self, knowledge_file, database_file=None):
-        assert os.path.exists(knowledge_file), f'Cannot locate <{knowledge_file}>. Please check!'
-        self.knowledge_path = knowledge_file
+    def __init__(self, data_fold_path, knowledge_file, database_file=None):
+        assert os.path.exists(data_fold_path), '\'data\' folder not found!'
+        self.knowledge_path = os.path.join(data_fold_path, knowledge_file)
+        backup_fold = os.path.join(data_fold_path, 'bak')
+        if not os.path.exists(backup_fold):
+            os.mkdir(backup_fold)
+
+        assert os.path.exists(self.knowledge_path), f'Cannot locate <{knowledge_file}>. Please check!'
         now = datetime.now()
         bak_extension = '_' + now.strftime('%m_%d_%Y__%H_%M_%S') + '.bak'
-        shutil.copyfile(self.knowledge_path, self.knowledge_path + bak_extension)
-        self.knowledge = pickle.load(open(knowledge_file, 'rb'))
+        shutil.copyfile(self.knowledge_path, os.path.join(backup_fold, knowledge_file) + bak_extension)
+        self.knowledge = pickle.load(open(self.knowledge_path, 'rb'))
         assert isinstance(self.knowledge, pd.DataFrame)
 
         if database_file is None:
-            self.db_path = os.path.splitext(knowledge_file)[0] + '.fmdb'
-        else:
-            self.db_path = database_file
+            database_file = os.path.splitext(knowledge_file)[0] + '.fmdb'
+
+        self.db_path = os.path.join(data_fold_path, database_file)
         if os.path.exists(self.db_path):
-            shutil.copyfile(self.db_path, self.db_path + bak_extension)
+            shutil.copyfile(self.db_path, os.path.join(backup_fold, database_file) + bak_extension)
             self.db = _load_update_db(self.db_path)
         else:
             self.db = {

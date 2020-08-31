@@ -1,4 +1,5 @@
 import sys
+import os
 from queue import Queue
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import QShortcut
@@ -11,12 +12,13 @@ import parameter
 
 
 class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
-    def __init__(self):
+    def __init__(self, resource_path):
         QtWidgets.QMainWindow.__init__(self)
         Ui_MainWindow.__init__(self)
+        self.data_fold_path = os.path.join(resource_path, 'data')
+        self.ui_fold_path = os.path.join(resource_path, 'ui')
         self.setupUi(self)
-
-        self.backend = core.FightMem('data/GRE1450.fmknowledge')
+        self.backend = core.FightMem(self.data_fold_path, 'GRE1450.fmknowledge')
         self.word = 'Error'
         self.pron = 'Knowledge file load error'
         self.mean = 'Knowledge file load error'
@@ -30,7 +32,7 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.active_table = None
         self.hp_bar_timer = None
         self.tts_queue = Queue()
-        self.tts_worker = tts.TTSWorker(self.tts_queue)
+        self.tts_worker = tts.TTSWorker(self.tts_queue, self.data_fold_path)
         self.tts_worker.start()
         self.tts_queue.put('Fight Mem TTS service has started')
         self.refresh_ui()
@@ -65,13 +67,13 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.t_stat.setText(self.stat)
 
         if self.star:
-            self.b_star.setPixmap(QtGui.QPixmap('ui/star_filled.png'))
+            self.b_star.setPixmap(QtGui.QPixmap(os.path.join(self.ui_fold_path, 'star_filled.png')))
         else:
-            self.b_star.setPixmap(QtGui.QPixmap('ui/star_empty.png'))
+            self.b_star.setPixmap(QtGui.QPixmap(os.path.join(self.ui_fold_path, 'star_empty.png')))
         if self.triangle:
-            self.b_triangle.setPixmap(QtGui.QPixmap('ui/triangle_filled.png'))
+            self.b_triangle.setPixmap(QtGui.QPixmap(os.path.join(self.ui_fold_path, 'triangle_filled.png')))
         else:
-            self.b_triangle.setPixmap(QtGui.QPixmap('ui/triangle_empty.png'))
+            self.b_triangle.setPixmap(QtGui.QPixmap(os.path.join(self.ui_fold_path, 'triangle_empty.png')))
 
         self.hp_bar.setMaximum(parameter.HP_FULL)
         self.repaint()
@@ -258,11 +260,3 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.note, self.star, self.triangle, self.stat = self.backend.get_next_quiz(self.e_mode.currentText())
         self.tts_queue.put(self.word)
         self.toggle_answer(force_to=True)
-
-
-if __name__ == "__main__":
-    sys.argv += ['--ignore-gpu-blacklist']  # Fix OpenGL Error for QWebEngineView on MacOS
-    app = QtWidgets.QApplication(sys.argv)
-    window = MyWindow()
-    window.show()
-    sys.exit(app.exec_())

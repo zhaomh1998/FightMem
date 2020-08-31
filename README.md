@@ -2,9 +2,9 @@
 ### Fight towards a permanent memory!
 A smart, customized Ebbinghaus Quizzing / Flash Cards App built with PyQt5.
 
-Learn Page            |  Ebbinghaus Statistics Table
-:-------------------------:|:-------------------------:
-![](screenshots/main.png)  |  ![](screenshots/table.png)
+Learn Page                 |  Ebbinghaus Statistics Table  |  Settings Page
+:-------------------------:|:-----------------------------:|:-------------------------:
+![](screenshots/main.png)  |![](screenshots/table.png)     |![](screenshots/setting.png)
 
 Frontend designed to work for memorizing words specifically but could be easily modified.
 
@@ -17,20 +17,37 @@ The two lists has differently turned Ebisu parameters to serve their purpose. Re
 An entry will first get into `Newbie List` and being tested very frequently, until enough correct quiz results, during when it will be transferred into `Eb List` for longer quizzing intervals in order to achieve long time memory.
 
 ## Run
-First make the knowledge file -- essentially a Pandas DataFrame. `pdf2knowledge.py` serves this purpose for the document that the developer uses.
+First make the knowledge file -- essentially a Pandas DataFrame. `util/pdf2knowledge.py` serves this purpose for the document that the developer uses. It's dependency is in `util/requirements.txt`
 
 
 First install required packages,
-```python
-pip install -r requirements.txt
+```bash
+pip install -r src/requirements/base.txt
 ```
 
 If you want to use Google Sheet sync functionality, set up according to [df2gspread documentation](https://df2gspread.readthedocs.io/en/latest/overview.html#access-credentials)
 
 To run the GUI,
-```python
+```bash
+fman run
+```
+
+or,
+```bash
+cd src/main/python
 python main.py
 ```
+
+
+## Package
+Create a python **3.6** virtual environment, and activate it. (As of Aug. 2020, Fman build system only support python 3.5 & 3.6)
+```bash
+pip install -r src/requirements/base.txt
+fbs run # to make sure it works under virtual environment
+fbs freeze # freeze the application
+fbs installer # create installer
+```
+If things went successfully, the packaged application should apprear under `/target`
 
 ## Todo List
 - [x] Function Key with left click Yes, right click No
