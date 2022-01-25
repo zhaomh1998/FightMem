@@ -10,7 +10,7 @@ import ebisu
 from df2gspread import df2gspread as d2g
 from parameter import EB_MODEL, EB_QUIZ_THRESH_DEFAULT, \
     NEWBIE_MODEL, NEWBIE_QUIZ_THRESH_DEFAULT, NEWBIE_TO_EB_THRESH_DEFAULT, NEWBIE_RETEST_SCHEDULE, LONG_MODEL, \
-    HP_FULL, HP_AWARD_EB, HP_AWARD_NEWBIE, HP_AWARD_NEW, HARD_PUNISH_MULTIPLIER
+    HP_FULL, HP_AWARD_EB, HP_AWARD_NEWBIE, HP_AWARD_NEW, HARD_PUNISH_MULTIPLIER, MAX_TDIFF
 
 
 class FightMem:
@@ -346,11 +346,12 @@ class FightMem:
         eb_df.at[item_index, 'correct'] += 1 if correct else 0
         if overwrite_model is None:
             try:
+                hl_hr = eb_df.loc[item_index, 'model'][2]
                 new_model = ebisu.updateRecall(
                     prior=eb_df.loc[item_index, 'model'],
                     successes=eb_df.loc[item_index, 'correct'],
                     total=eb_df.loc[item_index, 'total'],
-                    tnow=_time_diff_to_hr(eb_df.loc[item_index, 't_last'], datetime.now())
+                    tnow=MAX_TDIFF(_time_diff_to_hr(eb_df.loc[item_index, 't_last'], datetime.now()), hl_hr)
                 )
                 # For 'hard' response punishment
                 new_model = (new_model[0], new_model[1], new_model[2] / hl_modify)

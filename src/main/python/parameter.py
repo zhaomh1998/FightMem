@@ -21,3 +21,12 @@ def NEWBIE_RETEST_SCHEDULE(correct_count):
         return 0.5
     else:
         return correct_count ** 2
+
+
+def MAX_TDIFF(tdiff_hr, halflife_hr):
+    if halflife_hr < 12:
+        max_tdiff = 6
+    else:
+        max_tdiff = halflife_hr
+
+    return min(max_tdiff, tdiff_hr)
